@@ -1,0 +1,18 @@
+- id: R001
+  name: Territory must not include excluded markets
+  when: "//PublishingDetail/Territory"
+  assert: "not(contains(normalize-space(.), 'CA'))"
+  severity: "warn"
+  explain: "Contract excludes CA; ONIX territory appears to include CA."
+- id: R002
+  name: No audio format allowed
+  when: "//ProductForm"
+  assert: "text() != 'AB'"
+  severity: "error"
+  explain: "Contract forbids audio; ONIX shows audio form."
+- id: R003
+  name: Publication date must be present
+  when: "//PublishingDate"
+  assert: "normalize-space(.) != ''"
+  severity: "error"
+  explain: "Missing publication date."

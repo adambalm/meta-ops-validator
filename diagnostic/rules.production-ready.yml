@@ -1,0 +1,104 @@
+# Production-Ready ONIX Rule DSL Examples
+# These rules use proper namespace-aware XPaths and reference official codelists
+# 
+# IMPORTANT: These are TEMPLATE EXAMPLES. Replace with actual business rules
+# based on your specific contracts and publishing requirements.
+
+# Territory/Sales Rights Rules
+- id: R_TERRITORY_CA_EXCLUDED
+  name: Canada exclusion check
+  when: "//onix:SalesRights/onix:Territory"
+  assert: "not(contains(onix:CountriesExcluded, 'CA'))"
+  severity: "error"
+  explain: "Contract prohibits sales in Canada, but ONIX territory excludes CA"
+
+- id: R_TERRITORY_MUST_SPECIFY
+  name: Territory must be specified
+  when: "//onix:SalesRights"
+  assert: "onix:Territory/onix:CountriesIncluded or onix:Territory/onix:RegionsIncluded"
+  severity: "error"
+  explain: "Sales rights must specify included territories"
+
+# Product Form/Format Rules  
+- id: R_NO_AUDIO_FORMAT
+  name: Audio format restriction
+  when: "//onix:DescriptiveDetail"
+  assert: "not(onix:ProductForm = 'AB' or onix:ProductForm = 'AC' or onix:ProductForm = 'AD')"
+  severity: "error"
+  explain: "Contract prohibits audio formats (AB, AC, AD codes)"
+
+- id: R_EBOOK_ONLY_CONTRACT  
+  name: Digital-only contract validation
+  when: "//onix:DescriptiveDetail/onix:ProductForm"
+  assert: "starts-with(text(), 'E')"
+  severity: "warn"
+  explain: "Contract may be digital-only, verify physical format permissions"
+
+# Publishing Date Rules
+- id: R_PUB_DATE_REQUIRED
+  name: Publication date required
+  when: "//onix:PublishingDetail"
+  assert: "onix:PublishingDate[onix:PublishingDateRole = '01']/onix:Date[normalize-space(.) != '']"
+  severity: "error"
+  explain: "Publication date (role 01) is required and cannot be empty"
+
+- id: R_PUB_DATE_NOT_FUTURE
+  name: Publication date validation
+  when: "//onix:PublishingDate[onix:PublishingDateRole = '01']"
+  assert: "number(translate(onix:Date, '-', '')) <= number(translate(substring(string(current-date()), 1, 10), '-', ''))"
+  severity: "warn"  
+  explain: "Publication date should not be in the future"
+
+# Identifier Rules
+- id: R_ISBN13_REQUIRED
+  name: ISBN-13 identifier required
+  when: "//onix:Product"
+  assert: "onix:ProductIdentifier[onix:ProductIDType = '15']"
+  severity: "error"
+  explain: "Product must have ISBN-13 identifier (ProductIDType 15)"
+
+- id: R_ISBN13_FORMAT
+  name: ISBN-13 format validation
+  when: "//onix:ProductIdentifier[onix:ProductIDType = '15']"
+  assert: "string-length(normalize-space(onix:IDValue)) = 13 and not(contains(onix:IDValue, ' '))"
+  severity: "error"
+  explain: "ISBN-13 must be exactly 13 digits with no spaces"
+
+# Price Rules (if applicable)
+- id: R_PRICE_PRESENT
+  name: Price information required
+  when: "//onix:Product"
+  assert: "onix:ProductSupply/onix:SupplyDetail/onix:Price"
+  severity: "warn"
+  explain: "Product should include price information"
+
+- id: R_PRICE_CURRENCY
+  name: Price currency specification  
+  when: "//onix:Price"
+  assert: "onix:CurrencyCode"
+  severity: "error"
+  explain: "Price must specify currency code"
+
+# Content/Age Appropriateness Rules
+- id: R_AUDIENCE_SPECIFIED
+  name: Audience/age range specification
+  when: "//onix:DescriptiveDetail"
+  assert: "onix:Audience or onix:AudienceRange"
+  severity: "info"
+  explain: "Consider specifying target audience or age range for better discoverability"
+
+# Contributor Rules
+- id: R_AUTHOR_PRESENT
+  name: Author/contributor required
+  when: "//onix:DescriptiveDetail"
+  assert: "onix:Contributor[onix:ContributorRole = 'A01' or onix:ContributorRole = 'A02']"
+  severity: "warn"
+  explain: "Product should have at least one author (A01) or writer (A02)"
+
+# Subject Classification Rules
+- id: R_SUBJECT_CLASSIFICATION
+  name: Subject classification recommended
+  when: "//onix:DescriptiveDetail"  
+  assert: "onix:Subject"
+  severity: "info"
+  explain: "Adding subject classification improves discoverability"

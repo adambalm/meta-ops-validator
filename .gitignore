@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+.env.*
+.pytest_cache/
+coverage/
+dist/
+build/
+# OS
+.DS_Store
+Thumbs.db
+# Tooling
+.runs/
+runs/
+.streamlit/
+# Temp
+tmp_*.xml
+tmp_*.xsd
+tmp_*.sch

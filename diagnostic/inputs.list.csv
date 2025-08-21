@@ -1,0 +1,3 @@
+isbn,title,cover_url,description,categories,age_range
+9780000000001,Sample Title 1,https://example.com/c1.jpg,Short desc,Fiction;Thriller,12-18
+9780000000002,Sample Title 2,,,"Fiction",

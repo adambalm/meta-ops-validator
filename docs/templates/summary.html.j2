@@ -1,0 +1,11 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>MetaOps Diagnostic</title></head>
+<body>
+  <h1>MetaOps Diagnostic — Summary</h1>
+  {% for ds in data_sets %}
+    <h3>{{ ds.name }}</h3>
+    <pre>{{ ds.rows | tojson }}</pre>
+  {% endfor %}
+</body>
+</html>
