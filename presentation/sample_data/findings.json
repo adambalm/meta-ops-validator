@@ -1,0 +1,38 @@
+[
+  {
+    "isbn": "9781234567890",
+    "title": "Sample Technical Book",
+    "findings": [
+      {
+        "id": "R001",
+        "category": "Territory Compliance",
+        "severity": "error",
+        "message": "Contract excludes CA; ONIX territory appears to include CA",
+        "evidence": "verified",
+        "xpath": "/onix:Product/onix:PublishingDetail/onix:Territory"
+      },
+      {
+        "id": "R002", 
+        "category": "Product Form Restrictions",
+        "severity": "error",
+        "message": "Contract forbids audio; ONIX shows audio form AB",
+        "evidence": "verified",
+        "xpath": "/onix:Product/onix:DescriptiveDetail/onix:ProductForm"
+      }
+    ]
+  },
+  {
+    "isbn": "9781234567891",
+    "title": "Sample Fiction Book", 
+    "findings": [
+      {
+        "id": "R003",
+        "category": "Price Validation",
+        "severity": "warning",
+        "message": "Price currency inconsistent with territory",
+        "evidence": "verified",
+        "xpath": "/onix:Product/onix:ProductSupply/onix:SupplyDetail/onix:Price"
+      }
+    ]
+  }
+]

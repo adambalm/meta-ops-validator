@@ -25,6 +25,14 @@ Tag all metrics: [verified] or [inference].
 ### Visual Requirements  
 Pure Tufte CSS. No chartjunk.
 
+### Demo Deployment (CURRENT)
+Business-ready demo services at:
+- Business Demo: http://100.111.114.84:8090 (streamlit_business_demo.py)
+- Dashboard: http://100.111.114.84:8082/demo.html
+- Executive Report: http://100.111.114.84:8082/../reports/executive_summary.html
+
+Web server: python web_server.py (manages multiple services)
+
 ## PROJECT STATE (VARIABLE - CHECK MEMORY BANK)
 
 ### Current Status
@@ -61,6 +69,6 @@ Example commit workflow:
 
 ## AVAILABLE TOOLS
 
-MCP Servers: memory-bank, github, refs
-Slash commands: /setup-env, /validate
+MCP Servers: memory-bank, github, refs, playwright
+Web Services: web_server.py (ports 8090, 8082)
 Detailed context: CLAUDE_TECHNICAL.md, CLAUDE_BUSINESS.md

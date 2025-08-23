@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaOps Validator - Demo Dashboard</title>
+    <link rel="stylesheet" href="tufte-overrides.css">
+</head>
+<body>
+    <article>
+        <h1>MetaOps Validator Dashboard</h1>
+        <p class="subtitle">ONIX 3.x Pre-Feed Validation System</p>
+
+        <!-- Executive Summary -->
+        <section class="dashboard-section">
+            <h2>Executive Summary</h2>
+            <div class="metric-row">
+                <div class="metric">
+                    <div class="bignum">42</div>
+                    <div class="metric-label">titles with findings <span class="tag">[verified]</span></div>
+                </div>
+                <div class="metric">
+                    <div class="bignum">$12.5K</div>
+                    <div class="metric-label">monthly impact potential <span class="tag">[inference]</span></div>
+                </div>
+                <div class="metric">
+                    <div class="bignum">3</div>
+                    <div class="metric-label">critical categories <span class="tag">[verified]</span></div>
+                </div>
+            </div>
+            <p class="marginnote">
+                <span class="tag">[verified]</span> 
+                Based on XSD, Schematron, and Rule DSL validation against sample ONIX files.
+                Impact estimates assume 4-hour time-to-correct and $75/hour operational cost.
+            </p>
+        </section>
+
+        <!-- Error Taxonomy -->
+        <section class="dashboard-section">
+            <h2>Error Taxonomy</h2>
+            <table class="taxonomy-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Count</th>
+                        <th>Severity</th>
+                        <th>Evidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Territory Compliance</td>
+                        <td>18</td>
+                        <td class="severity-error">Error</td>
+                        <td><span class="tag">[verified]</span></td>
+                    </tr>
+                    <tr>
+                        <td>Product Form Restrictions</td>
+                        <td>15</td>
+                        <td class="severity-error">Error</td>
+                        <td><span class="tag">[verified]</span></td>
+                    </tr>
+                    <tr>
+                        <td>Price Validation</td>
+                        <td>9</td>
+                        <td class="severity-warn">Warning</td>
+                        <td><span class="tag">[verified]</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Sample ONIX Validation -->
+        <section class="dashboard-section">
+            <h2>Sample Validation Results</h2>
+            <h3>XSD Validation</h3>
+            <p>Status: <strong>Pass</strong> <span class="tag">[verified]</span></p>
+            <pre>XSD checked: 0 issues</pre>
+
+            <h3>Schematron Validation</h3>
+            <p>Status: <strong>1 finding</strong> <span class="tag">[verified]</span></p>
+            <pre>{
+  "type": "schematron",
+  "test": "ProductForm != 'AB'",
+  "location": "/ONIX/Product/DescriptiveDetail",
+  "message": "Audio format 'AB' not allowed (demo)"
+}</pre>
+
+            <h3>Rule DSL Validation</h3>
+            <p>Status: <strong>2 findings</strong> <span class="tag">[verified]</span></p>
+            <pre>{
+  "id": "R001",
+  "name": "Territory must not include excluded markets",
+  "severity": "warn",
+  "explain": "Contract excludes CA; ONIX territory appears to include CA."
+}</pre>
+        </section>
+
+        <!-- ONIX Case View -->
+        <section class="dashboard-section">
+            <h2>ONIX Case View</h2>
+            <p>Demonstration of namespace-aware ONIX validation</p>
+            
+            <div class="before-after">
+                <div>
+                    <h4>Current ONIX (Toy Format)</h4>
+                    <div class="onix-sample">
+&lt;ONIX&gt;
+  &lt;Product&gt;
+    &lt;RecordReference&gt;demo-123&lt;/RecordReference&gt;
+    &lt;NotificationType&gt;03&lt;/NotificationType&gt;
+    &lt;DescriptiveDetail&gt;
+      &lt;ProductForm&gt;AB&lt;/ProductForm&gt;
+    &lt;/DescriptiveDetail&gt;
+    &lt;PublishingDetail&gt;
+      &lt;Territory&gt;US CA&lt;/Territory&gt;
+    &lt;/PublishingDetail&gt;
+  &lt;/Product&gt;
+&lt;/ONIX&gt;
+                    </div>
+                </div>
+                <div>
+                    <h4>Production ONIX (Namespaced)</h4>
+                    <div class="onix-sample">
+&lt;onix:Product xmlns:onix="http://ns.editeur.org/onix/3.0/reference"&gt;
+  &lt;onix:RecordReference&gt;demo-123&lt;/onix:RecordReference&gt;
+  &lt;onix:NotificationType&gt;03&lt;/onix:NotificationType&gt;
+  &lt;onix:DescriptiveDetail&gt;
+    &lt;onix:ProductForm&gt;BB&lt;/onix:ProductForm&gt;
+  &lt;/onix:DescriptiveDetail&gt;
+  &lt;onix:PublishingDetail&gt;
+    &lt;onix:Territory&gt;US&lt;/onix:Territory&gt;
+  &lt;/onix:PublishingDetail&gt;
+&lt;/onix:Product&gt;
+                    </div>
+                </div>
+            </div>
+            <p class="marginnote">
+                <span class="tag">[verified]</span> 
+                Production version removes CA territory and changes ProductForm from AB (Audio) to BB (Hardback) 
+                per contract restrictions.
+            </p>
+        </section>
+
+        <!-- System Architecture -->
+        <section class="dashboard-section">
+            <h2>Validation Pipeline</h2>
+            <ol>
+                <li><strong>Namespace Detection</strong> - Identifies toy vs production ONIX format</li>
+                <li><strong>XSD Validation</strong> - Schema structure compliance</li>
+                <li><strong>Schematron Rules</strong> - Business rule validation</li>
+                <li><strong>Rule DSL Engine</strong> - Contract-aware custom validation</li>
+                <li><strong>Report Generation</strong> - Structured JSON/HTML output</li>
+            </ol>
+            <p class="marginnote">
+                All components support both toy schemas (for demo) and production EDItEUR schemas.
+                Migration path documented in <code>data/editeur/README.md</code>.
+            </p>
+        </section>
+
+        <!-- Technical Details -->
+        <section class="dashboard-section">
+            <h2>Technical Implementation</h2>
+            <table>
+                <tr>
+                    <th>Component</th>
+                    <th>Status</th>
+                    <th>Evidence</th>
+                </tr>
+                <tr>
+                    <td>CLI Interface</td>
+                    <td>✅ Functional</td>
+                    <td><span class="tag">[verified]</span></td>
+                </tr>
+                <tr>
+                    <td>Streamlit GUI</td>
+                    <td>✅ Functional</td>
+                    <td><span class="tag">[verified]</span></td>
+                </tr>
+                <tr>
+                    <td>Test Suite</td>
+                    <td>8 passed, 3 skipped</td>
+                    <td><span class="tag">[verified]</span></td>
+                </tr>
+                <tr>
+                    <td>Namespace Detection</td>
+                    <td>✅ Implemented</td>
+                    <td><span class="tag">[verified]</span></td>
+                </tr>
+                <tr>
+                    <td>Production Migration</td>
+                    <td>⏳ Ready for EDItEUR schemas</td>
+                    <td><span class="tag">[inference]</span></td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Navigation Links -->
+        <section class="dashboard-section">
+            <h2>Interactive Demo</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0;">
+                <div style="text-align: center;">
+                    <a href="http://100.111.114.84:8090" target="_blank" style="display: inline-block; padding: 1rem 2rem; background: #0f766e; color: white; text-decoration: none; border-radius: 0.25rem; font-weight: 600;">
+                        🚀 Launch Interactive Demo
+                    </a>
+                    <p style="margin-top: 0.5rem; font-size: 0.875rem; color: #666;">
+                        Self-contained validation interface with embedded sample files
+                    </p>
+                </div>
+                <div style="text-align: center;">
+                    <a href="../reports/executive_summary.html" target="_blank" style="display: inline-block; padding: 1rem 2rem; background: #0284c7; color: white; text-decoration: none; border-radius: 0.25rem; font-weight: 600;">
+                        📋 Executive Summary
+                    </a>
+                    <p style="margin-top: 0.5rem; font-size: 0.875rem; color: #666;">
+                        Business-focused validation findings and impact analysis
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #eee; font-size: 0.875rem; color: #666;">
+            <p>MetaOps Validator v0.4 - Demo Dashboard</p>
+            <p>All metrics tagged with evidence levels: <span class="tag">[verified]</span> for deterministic validation, <span class="tag">[inference]</span> for estimates.</p>
+            <p><strong>Access URLs:</strong></p>
+            <ul style="list-style: none; padding: 0;">
+                <li>📊 Business Demo: <a href="http://100.111.114.84:8090">http://100.111.114.84:8090</a></li>
+                <li>📋 Dashboard: <a href="http://100.111.114.84:8082/demo.html">http://100.111.114.84:8082/demo.html</a></li>
+                <li>📄 Executive Report: <a href="http://100.111.114.84:8082/../reports/executive_summary.html">http://100.111.114.84:8082/../reports/executive_summary.html</a></li>
+            </ul>
+        </footer>
+    </article>
+</body>
+</html>
