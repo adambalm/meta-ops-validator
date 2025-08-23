@@ -11,10 +11,12 @@ MetaOps Validator is a Pre-Feed ONIX validation system with CLI + GUI interfaces
 ## Core Architecture
 
 ### Validation Pipeline
-The system follows a three-stage validation approach:
+The system follows a five-stage validation approach:
 1. **XSD Validation** (`src/metaops/validators/onix_xsd.py`) - Schema structure validation
 2. **Schematron Rules** (`src/metaops/validators/onix_schematron.py`) - Business rule validation 
 3. **Custom Rule DSL** (`src/metaops/rules/engine.py`) - Contract-aware validation using YAML rules with XPath expressions
+4. **Nielsen Completeness Scoring** (`src/metaops/validators/nielsen_scoring.py`) - Metadata completeness correlation with sales performance
+5. **Retailer Compatibility Analysis** (`src/metaops/validators/retailer_profiles.py`) - Platform-specific requirement validation
 
 ### Namespace Handling
 The `src/metaops/onix_utils.py` module provides critical namespace detection:
@@ -44,7 +46,7 @@ pip install -r requirements.txt
 ### Running Components
 ```bash
 # GUI Interface
-streamlit run streamlit_app.py
+streamlit run src/metaops/web/streamlit_app.py --server.port 8507 --server.address 0.0.0.0
 
 # CLI Commands (requires PYTHONPATH)
 export PYTHONPATH=/path/to/meta-ops-validator/src
@@ -87,7 +89,10 @@ The Rule DSL engine (`src/metaops/rules/engine.py`) detects ONIX namespace varia
 `src/metaops/codelists.py` provides the foundation for loading official EDItEUR codelists. Current implementations are placeholders - real production use requires downloading and integrating official codelist files into `data/editeur/codelists/`.
 
 ### GUI Safety Guards
-The Streamlit interface (`streamlit_app.py`) includes namespace detection warnings that alert users when they upload real ONIX files but the system is still configured for toy validation.
+The Streamlit interfaces include comprehensive tooltip systems and namespace detection warnings:
+- **Main Validator** (`src/metaops/web/streamlit_app.py`) - Single file validation with contextual help
+- **Analytics Dashboard** (`src/metaops/web/dashboard.py`) - Batch processing and analytics
+- **Business Demo** (`src/metaops/web/streamlit_business_demo.py`) - Stakeholder demonstrations
 
 ## Production Migration Path
 

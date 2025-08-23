@@ -10,6 +10,8 @@ export PYTHONPATH=/home/ed/meta-ops-validator/src
 1. XSD validation (validators/onix_xsd.py)
 2. Schematron validation (validators/onix_schematron.py)  
 3. Rule DSL validation (rules/engine.py)
+4. Nielsen Completeness Scoring (validators/nielsen_scoring.py)
+5. Retailer Compatibility Analysis (validators/retailer_profiles.py)
 
 ## CRITICAL RULES (INVARIANT)
 
@@ -25,13 +27,13 @@ Tag all metrics: [verified] or [inference].
 ### Visual Requirements  
 Pure Tufte CSS. No chartjunk.
 
-### Demo Deployment (CURRENT)
-Business-ready demo services at:
-- Business Demo: http://100.111.114.84:8090 (streamlit_business_demo.py)
-- Dashboard: http://100.111.114.84:8082/demo.html
-- Executive Report: http://100.111.114.84:8082/../reports/executive_summary.html
+### Web Services (CURRENT)
+Production-ready validation interfaces:
+- Main Validator: http://100.111.114.84:8507 (streamlit_app.py) - Single file validation with tooltips
+- Analytics Dashboard: http://100.111.114.84:8508 (dashboard.py) - Batch processing and analytics
+- Business Demo: http://100.111.114.84:8090 (streamlit_business_demo.py) - Stakeholder presentations
 
-Web server: python web_server.py (manages multiple services)
+Start services: streamlit run src/metaops/web/[app].py --server.port [PORT] --server.address 0.0.0.0
 
 ## PROJECT STATE (VARIABLE - CHECK MEMORY BANK)
 
@@ -70,5 +72,7 @@ Example commit workflow:
 ## AVAILABLE TOOLS
 
 MCP Servers: memory-bank, github, refs, playwright
-Web Services: web_server.py (ports 8090, 8082)
-Detailed context: CLAUDE_TECHNICAL.md, CLAUDE_BUSINESS.md
+Web Services: Streamlit apps on ports 8507, 8508, 8090
+UI Testing: Playwright MCP for automated usability evaluation
+Test Files: test_onix_files/ (15 generated samples)
+Detailed context: TOOLTIPS_REFERENCE.md, UI_SPECIFICATION.md
