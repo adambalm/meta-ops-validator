@@ -27,8 +27,12 @@ Tag all metrics: [verified] or [inference].
 ### Visual Requirements  
 Pure Tufte CSS. No chartjunk.
 
+### Language Guidelines (INVARIANT)
+NEVER use "production-ready" - system uses toy schemas for demo purposes.
+Use: "demo-ready", "functional", "operational", "complete", "mature".
+
 ### Web Services (CURRENT)
-Production-ready validation interfaces:
+Functional validation interfaces:
 - Main Validator: http://100.111.114.84:8507 (streamlit_app.py) - Single file validation with tooltips
 - Analytics Dashboard: http://100.111.114.84:8508 (dashboard.py) - Batch processing and analytics
 - Business Demo: http://100.111.114.84:8090 (streamlit_business_demo.py) - Stakeholder presentations
