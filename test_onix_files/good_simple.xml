@@ -1,0 +1,65 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ONIXMessage release="3.0">
+  <Header>
+    <Sender>MetaOps Test Generator</Sender>
+    <SentDateTime>20250823T033508</SentDateTime>
+    <MessageNote>Test file - good completeness</MessageNote>
+  </Header>
+  <Product>
+    <RecordReference>TEST_GOOD_2612</RecordReference>
+    <NotificationType>03</NotificationType>
+    <DescriptiveDetail>
+      <TitleDetail>
+        <TitleType>01</TitleType>
+        <TitleElement>
+          <TitleElementLevel>01</TitleElementLevel>
+          <TitleText>Complete Test Book: A Comprehensive Guide</TitleText>
+        </TitleElement>
+      </TitleDetail>
+      <Contributor>
+        <SequenceNumber>1</SequenceNumber>
+        <ContributorRole>01</ContributorRole>
+        <PersonName>Dr. Jane Smith</PersonName>
+      </Contributor>
+      <ProductForm>BC</ProductForm>
+      <TextContent>
+        <TextType>03</TextType>
+        <Text>This is a comprehensive test book designed to validate ONIX metadata completeness scoring. It includes all major metadata fields required by modern retailers and discovery systems.</Text>
+      </TextContent>
+      <Subject>
+        <SubjectSchemeIdentifier>10</SubjectSchemeIdentifier>
+        <SubjectCode>FIC000000</SubjectCode>
+      </Subject>
+      <Subject>
+        <SubjectSchemeIdentifier>10</SubjectSchemeIdentifier>
+        <SubjectCode>FIC019000</SubjectCode>
+      </Subject>
+    </DescriptiveDetail>
+    <PublishingDetail>
+      <Publisher>
+        <PublishingRole>01</PublishingRole>
+        <PublisherName>Test Publishing House</PublisherName>
+      </Publisher>
+      <PublishingDate>
+        <PublishingDateRole>01</PublishingDateRole>
+        <Date>20241201</Date>
+      </PublishingDate>
+    </PublishingDetail>
+    <ProductSupply>
+      <SupplyDetail>
+        <Supplier>
+          <SupplierRole>09</SupplierRole>
+        </Supplier>
+        <Price>
+          <PriceType>02</PriceType>
+          <PriceAmount>24.99</PriceAmount>
+          <CurrencyCode>USD</CurrencyCode>
+        </Price>
+      </SupplyDetail>
+    </ProductSupply>
+    <ProductIdentifier>
+      <ProductIDType>15</ProductIDType>
+      <IDValue>9781234567890</IDValue>
+    </ProductIdentifier>
+  </Product>
+</ONIXMessage>

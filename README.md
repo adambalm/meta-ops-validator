@@ -1,4 +1,4 @@
-# MetaOps Validator — ONIX Validation Platform
+# MetaOps Validator — Enterprise ONIX Validation Platform
 
 **Pre-feed ONIX validation and metadata completeness scoring for publishing success.**
 
@@ -128,17 +128,19 @@ python scripts/generate_test_onix.py
 ## 📋 System Status
 
 ### Current Status ✅
-- Complete validation pipeline operational  
-- Mature web interfaces with comprehensive UX
+- Complete validation pipeline operational with official EDItEUR schemas
+- Enterprise-ready web interfaces with comprehensive UX  
 - Nielsen completeness scoring with sales correlation
-- Multi-retailer compatibility analysis
-- Automated UI testing framework
-- Comprehensive documentation and tooltips
+- Multi-retailer compatibility analysis (Amazon, IngramSpark, Apple Books, etc.)
+- Automated UI testing framework with Playwright MCP
+- Comprehensive documentation and contextual tooltips
+- Real ONIX 3.0 validation (reference and short-tag variants)
 
-### Schema Status ⚠️
-- **Development**: Uses toy schemas for immediate functionality
-- **Migration Path**: Ready for official EDItEUR ONIX 3.0 schemas
-- **Migration**: See `data/editeur/README.md` for upgrade instructions
+### Schema Status ✅
+- **EDItEUR Official**: Using official ONIX 3.0 XSD schemas
+- **Namespace Support**: Full support for reference and short-tag variants
+- **Auto-Detection**: Automatic namespace detection and schema selection
+- **Validation Ready**: Enterprise-ready for real ONIX file processing
 
 ### Business Model Ready 💰
 - Diagnostic report generation

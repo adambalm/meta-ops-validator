@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ns0:ONIXMessage xmlns:ns0="http://ns.editeur.org/onix/3.0/reference" xmlns="http://ns.editeur.org/onix/3.0/reference" release="3.0">
+  <ns0:Header>
+    <ns0:Sender>MetaOps Test Generator</ns0:Sender>
+    <ns0:SentDateTime>20250823T033508</ns0:SentDateTime>
+    <ns0:MessageNote>Test file - minimal completeness</ns0:MessageNote>
+  </ns0:Header>
+  <ns0:Product>
+    <ns0:RecordReference>TEST_MINIMAL_7196</ns0:RecordReference>
+    <ns0:NotificationType>03</ns0:NotificationType>
+    <ns0:DescriptiveDetail>
+      <ns0:ProductForm>BC</ns0:ProductForm>
+    </ns0:DescriptiveDetail>
+    <ns0:PublishingDetail />
+    <ns0:ProductSupply />
+  </ns0:Product>
+</ns0:ONIXMessage>

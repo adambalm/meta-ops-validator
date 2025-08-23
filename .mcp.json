@@ -14,6 +14,10 @@
       "env": {
         "REF_API_KEY": "ref-eae1124a4f065f8a709c"
       }
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest", "--headless"]
     }
   }
 }

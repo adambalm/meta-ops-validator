@@ -1,0 +1,97 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ONIXMessage release="3.0">
+  <Header>
+    <Sender>MetaOps Test Generator</Sender>
+    <SentDateTime>20250823T033508</SentDateTime>
+    <MessageNote>Test file - excellent completeness</MessageNote>
+  </Header>
+  <Product>
+    <RecordReference>TEST_EXCELLENT_7702</RecordReference>
+    <NotificationType>03</NotificationType>
+    <DescriptiveDetail>
+      <TitleDetail>
+        <TitleType>01</TitleType>
+        <TitleElement>
+          <TitleElementLevel>01</TitleElementLevel>
+          <TitleText>The Complete Test Book: Advanced Metadata Validation Techniques</TitleText>
+        </TitleElement>
+      </TitleDetail>
+      <Contributor>
+        <SequenceNumber>1</SequenceNumber>
+        <ContributorRole>01</ContributorRole>
+        <PersonName>Dr. Jane Smith</PersonName>
+      </Contributor>
+      <Contributor>
+        <SequenceNumber>1</SequenceNumber>
+        <ContributorRole>10</ContributorRole>
+        <PersonName>Prof. John Doe</PersonName>
+      </Contributor>
+      <ProductForm>BC</ProductForm>
+      <TextContent>
+        <TextType>03</TextType>
+        <Text>This comprehensive test book serves as the definitive guide to ONIX metadata validation and completeness scoring. Featuring detailed examples, best practices, and real-world case studies, it provides publishers with the knowledge needed to optimize their metadata for maximum sales impact across all retail channels.</Text>
+      </TextContent>
+      <Subject>
+        <SubjectSchemeIdentifier>10</SubjectSchemeIdentifier>
+        <SubjectCode>COM018000</SubjectCode>
+      </Subject>
+      <Subject>
+        <SubjectSchemeIdentifier>10</SubjectSchemeIdentifier>
+        <SubjectCode>COM051380</SubjectCode>
+      </Subject>
+      <Subject>
+        <SubjectSchemeIdentifier>10</SubjectSchemeIdentifier>
+        <SubjectCode>BUS107000</SubjectCode>
+      </Subject>
+      <Collection>
+        <CollectionType>10</CollectionType>
+        <TitleDetail>
+          <TitleType>01</TitleType>
+          <TitleElement>
+            <TitleElementLevel>02</TitleElementLevel>
+            <TitleText>Metadata Management Series</TitleText>
+            <PartNumber>1</PartNumber>
+          </TitleElement>
+        </TitleDetail>
+      </Collection>
+      <SupportingResource>
+        <ResourceContentType>01</ResourceContentType>
+        <ContentAudience>00</ContentAudience>
+        <ResourceVersion>
+          <ResourceForm>02</ResourceForm>
+          <ResourceVersionFeature />
+          <ResourceLink>https://example.com/covers/test-book-cover.jpg</ResourceLink>
+        </ResourceVersion>
+      </SupportingResource>
+    </DescriptiveDetail>
+    <PublishingDetail>
+      <Publisher>
+        <PublishingRole>01</PublishingRole>
+        <PublisherName>Advanced Publishing Solutions</PublisherName>
+      </Publisher>
+      <Imprint>
+        <ImprintName>TechBook Imprint</ImprintName>
+      </Imprint>
+      <PublishingDate>
+        <PublishingDateRole>01</PublishingDateRole>
+        <Date>20241215</Date>
+      </PublishingDate>
+    </PublishingDetail>
+    <ProductSupply>
+      <SupplyDetail>
+        <Supplier>
+          <SupplierRole>09</SupplierRole>
+        </Supplier>
+        <Price>
+          <PriceType>02</PriceType>
+          <PriceAmount>34.99</PriceAmount>
+          <CurrencyCode>USD</CurrencyCode>
+        </Price>
+      </SupplyDetail>
+    </ProductSupply>
+    <ProductIdentifier>
+      <ProductIDType>15</ProductIDType>
+      <IDValue>9781234567890</IDValue>
+    </ProductIdentifier>
+  </Product>
+</ONIXMessage>

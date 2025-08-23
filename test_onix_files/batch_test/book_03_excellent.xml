@@ -1,0 +1,97 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ns0:ONIXMessage xmlns:ns0="http://ns.editeur.org/onix/3.0/reference" xmlns="http://ns.editeur.org/onix/3.0/reference" release="3.0">
+  <ns0:Header>
+    <ns0:Sender>MetaOps Test Generator</ns0:Sender>
+    <ns0:SentDateTime>20250823T033508</ns0:SentDateTime>
+    <ns0:MessageNote>Test file - excellent completeness</ns0:MessageNote>
+  </ns0:Header>
+  <ns0:Product>
+    <ns0:RecordReference>TEST_EXCELLENT_5588</ns0:RecordReference>
+    <ns0:NotificationType>03</ns0:NotificationType>
+    <ns0:DescriptiveDetail>
+      <ns0:TitleDetail>
+        <ns0:TitleType>01</ns0:TitleType>
+        <ns0:TitleElement>
+          <ns0:TitleElementLevel>01</ns0:TitleElementLevel>
+          <ns0:TitleText>The Complete Test Book: Advanced Metadata Validation Techniques</ns0:TitleText>
+        </ns0:TitleElement>
+      </ns0:TitleDetail>
+      <ns0:Contributor>
+        <ns0:SequenceNumber>1</ns0:SequenceNumber>
+        <ns0:ContributorRole>01</ns0:ContributorRole>
+        <ns0:PersonName>Dr. Jane Smith</ns0:PersonName>
+      </ns0:Contributor>
+      <ns0:Contributor>
+        <ns0:SequenceNumber>1</ns0:SequenceNumber>
+        <ns0:ContributorRole>10</ns0:ContributorRole>
+        <ns0:PersonName>Prof. John Doe</ns0:PersonName>
+      </ns0:Contributor>
+      <ns0:ProductForm>BC</ns0:ProductForm>
+      <ns0:TextContent>
+        <ns0:TextType>03</ns0:TextType>
+        <ns0:Text>This comprehensive test book serves as the definitive guide to ONIX metadata validation and completeness scoring. Featuring detailed examples, best practices, and real-world case studies, it provides publishers with the knowledge needed to optimize their metadata for maximum sales impact across all retail channels.</ns0:Text>
+      </ns0:TextContent>
+      <ns0:Subject>
+        <ns0:SubjectSchemeIdentifier>10</ns0:SubjectSchemeIdentifier>
+        <ns0:SubjectCode>COM018000</ns0:SubjectCode>
+      </ns0:Subject>
+      <ns0:Subject>
+        <ns0:SubjectSchemeIdentifier>10</ns0:SubjectSchemeIdentifier>
+        <ns0:SubjectCode>COM051380</ns0:SubjectCode>
+      </ns0:Subject>
+      <ns0:Subject>
+        <ns0:SubjectSchemeIdentifier>10</ns0:SubjectSchemeIdentifier>
+        <ns0:SubjectCode>BUS107000</ns0:SubjectCode>
+      </ns0:Subject>
+      <ns0:Collection>
+        <ns0:CollectionType>10</ns0:CollectionType>
+        <ns0:TitleDetail>
+          <ns0:TitleType>01</ns0:TitleType>
+          <ns0:TitleElement>
+            <ns0:TitleElementLevel>02</ns0:TitleElementLevel>
+            <ns0:TitleText>Metadata Management Series</ns0:TitleText>
+            <ns0:PartNumber>1</ns0:PartNumber>
+          </ns0:TitleElement>
+        </ns0:TitleDetail>
+      </ns0:Collection>
+      <ns0:SupportingResource>
+        <ns0:ResourceContentType>01</ns0:ResourceContentType>
+        <ns0:ContentAudience>00</ns0:ContentAudience>
+        <ns0:ResourceVersion>
+          <ns0:ResourceForm>02</ns0:ResourceForm>
+          <ns0:ResourceVersionFeature />
+          <ns0:ResourceLink>https://example.com/covers/test-book-cover.jpg</ns0:ResourceLink>
+        </ns0:ResourceVersion>
+      </ns0:SupportingResource>
+    </ns0:DescriptiveDetail>
+    <ns0:PublishingDetail>
+      <ns0:Publisher>
+        <ns0:PublishingRole>01</ns0:PublishingRole>
+        <ns0:PublisherName>Advanced Publishing Solutions</ns0:PublisherName>
+      </ns0:Publisher>
+      <ns0:Imprint>
+        <ns0:ImprintName>TechBook Imprint</ns0:ImprintName>
+      </ns0:Imprint>
+      <ns0:PublishingDate>
+        <ns0:PublishingDateRole>01</ns0:PublishingDateRole>
+        <ns0:Date>20241215</ns0:Date>
+      </ns0:PublishingDate>
+    </ns0:PublishingDetail>
+    <ns0:ProductSupply>
+      <ns0:SupplyDetail>
+        <ns0:Supplier>
+          <ns0:SupplierRole>09</ns0:SupplierRole>
+        </ns0:Supplier>
+        <ns0:Price>
+          <ns0:PriceType>02</ns0:PriceType>
+          <ns0:PriceAmount>34.99</ns0:PriceAmount>
+          <ns0:CurrencyCode>USD</ns0:CurrencyCode>
+        </ns0:Price>
+      </ns0:SupplyDetail>
+    </ns0:ProductSupply>
+    <ns0:ProductIdentifier>
+      <ns0:ProductIDType>15</ns0:ProductIDType>
+      <ns0:IDValue>9781234567890</ns0:IDValue>
+    </ns0:ProductIdentifier>
+  </ns0:Product>
+</ns0:ONIXMessage>

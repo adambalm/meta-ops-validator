@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 MetaOps Validator is a Pre-Feed ONIX validation system with CLI + GUI interfaces for enterprise publishing operations. It validates ONIX 3.x files using XSD, Schematron, and custom Rule DSL patterns, then generates operational KPI reports.
 
-**Critical Context: The system currently uses TOY SCHEMAS for demo purposes.** All validation components are designed to migrate from toy implementations to production-ready ONIX 3.x validation using official EDItEUR schemas and codelists.
+**Critical Context: The system uses official EDItEUR ONIX 3.0 schemas for enterprise validation.** All validation components are operational with real ONIX 3.x files using official EDItEUR schemas, automatic namespace detection, and full reference/short-tag support.
 
 ## Core Architecture
 

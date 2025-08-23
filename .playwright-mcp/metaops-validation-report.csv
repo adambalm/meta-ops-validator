@@ -1,0 +1,4 @@
+type,test,location,message,validation_type,id,name,severity,explain,context_path,assert
+schematron,ProductForm != 'AB',/ONIX/Product/DescriptiveDetail,Audio format 'AB' not allowed (demo),Schematron Rules,,,,,,
+,,,,Contract DSL,R001,Territory must not include excluded markets,warn,Contract excludes CA; ONIX territory appears to include CA.,/ONIX/Product/PublishingDetail/Territory,"not(contains(normalize-space(.), 'CA'))"
+,,,,Contract DSL,R002,No audio format allowed,error,Contract forbids audio; ONIX shows audio form.,/ONIX/Product/DescriptiveDetail/ProductForm,text() != 'AB'

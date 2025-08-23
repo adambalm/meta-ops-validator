@@ -53,3 +53,32 @@
   - No additional network configuration required
   - Clean URLs for business demonstrations
   - Hard-coded IP requires update if server changes
+
+## Business-focused tooltip design
+- **Date:** 2025-08-23 3:51:05 AM
+- **Author:** Unknown User
+- **Context:** UI needed contextual help that explained business impact rather than just technical details
+- **Decision:** Implemented comprehensive tooltip system with business explanations focusing on sales impact, retailer requirements, and publishing success outcomes
+- **Alternatives Considered:** 
+  - Technical-only tooltips
+  - No tooltip system
+  - External documentation links
+- **Consequences:** 
+  - Improved user understanding of validation business value
+  - Reduced learning curve for non-technical users
+  - Enhanced self-service capability
+  - Better user adoption potential
+
+## Playwright MCP for UI testing
+- **Date:** 2025-08-23 3:51:10 AM
+- **Author:** Unknown User
+- **Context:** Needed to evaluate UI usability on headless server environment without local GUI capabilities
+- **Decision:** Used Playwright MCP server for automated UI testing instead of local Playwright installation
+- **Alternatives Considered:** 
+  - Local Playwright installation
+  - Manual testing only
+  - Selenium-based testing
+- **Consequences:** 
+  - Successful automated UI evaluation on headless server
+  - Comprehensive usability assessment completed
+  - Established pattern for future UI testing

@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ONIXMessage release="3.0">
+  <Header>
+    <Sender>MetaOps Test Generator</Sender>
+    <SentDateTime>20250823T033508</SentDateTime>
+    <MessageNote>Test file - minimal completeness</MessageNote>
+  </Header>
+  <Product>
+    <RecordReference>TEST_MINIMAL_5510</RecordReference>
+    <NotificationType>03</NotificationType>
+    <DescriptiveDetail>
+      <ProductForm>BC</ProductForm>
+    </DescriptiveDetail>
+    <PublishingDetail />
+    <ProductSupply />
+  </Product>
+</ONIXMessage>

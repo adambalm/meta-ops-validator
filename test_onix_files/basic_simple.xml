@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ONIXMessage release="3.0">
+  <Header>
+    <Sender>MetaOps Test Generator</Sender>
+    <SentDateTime>20250823T033508</SentDateTime>
+    <MessageNote>Test file - basic completeness</MessageNote>
+  </Header>
+  <Product>
+    <RecordReference>TEST_BASIC_5039</RecordReference>
+    <NotificationType>03</NotificationType>
+    <DescriptiveDetail>
+      <TitleDetail>
+        <TitleType>01</TitleType>
+        <TitleElement>
+          <TitleElementLevel>01</TitleElementLevel>
+          <TitleText>Test Book Title</TitleText>
+        </TitleElement>
+      </TitleDetail>
+      <Contributor>
+        <SequenceNumber>1</SequenceNumber>
+        <ContributorRole>01</ContributorRole>
+        <PersonName>Test Author</PersonName>
+      </Contributor>
+      <ProductForm>BC</ProductForm>
+    </DescriptiveDetail>
+    <PublishingDetail />
+    <ProductSupply>
+      <SupplyDetail>
+        <Supplier>
+          <SupplierRole>09</SupplierRole>
+        </Supplier>
+        <Price>
+          <PriceType>02</PriceType>
+          <PriceAmount>19.99</PriceAmount>
+          <CurrencyCode>USD</CurrencyCode>
+        </Price>
+      </SupplyDetail>
+    </ProductSupply>
+    <ProductIdentifier>
+      <ProductIDType>15</ProductIDType>
+      <IDValue>9781234567890</IDValue>
+    </ProductIdentifier>
+  </Product>
+</ONIXMessage>

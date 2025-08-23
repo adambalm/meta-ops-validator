@@ -1,0 +1,65 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ns0:ONIXMessage xmlns:ns0="http://ns.editeur.org/onix/3.0/reference" xmlns="http://ns.editeur.org/onix/3.0/reference" release="3.0">
+  <ns0:Header>
+    <ns0:Sender>MetaOps Test Generator</ns0:Sender>
+    <ns0:SentDateTime>20250823T033508</ns0:SentDateTime>
+    <ns0:MessageNote>Test file - good completeness</ns0:MessageNote>
+  </ns0:Header>
+  <ns0:Product>
+    <ns0:RecordReference>TEST_GOOD_8934</ns0:RecordReference>
+    <ns0:NotificationType>03</ns0:NotificationType>
+    <ns0:DescriptiveDetail>
+      <ns0:TitleDetail>
+        <ns0:TitleType>01</ns0:TitleType>
+        <ns0:TitleElement>
+          <ns0:TitleElementLevel>01</ns0:TitleElementLevel>
+          <ns0:TitleText>Complete Test Book: A Comprehensive Guide</ns0:TitleText>
+        </ns0:TitleElement>
+      </ns0:TitleDetail>
+      <ns0:Contributor>
+        <ns0:SequenceNumber>1</ns0:SequenceNumber>
+        <ns0:ContributorRole>01</ns0:ContributorRole>
+        <ns0:PersonName>Dr. Jane Smith</ns0:PersonName>
+      </ns0:Contributor>
+      <ns0:ProductForm>BC</ns0:ProductForm>
+      <ns0:TextContent>
+        <ns0:TextType>03</ns0:TextType>
+        <ns0:Text>This is a comprehensive test book designed to validate ONIX metadata completeness scoring. It includes all major metadata fields required by modern retailers and discovery systems.</ns0:Text>
+      </ns0:TextContent>
+      <ns0:Subject>
+        <ns0:SubjectSchemeIdentifier>10</ns0:SubjectSchemeIdentifier>
+        <ns0:SubjectCode>FIC000000</ns0:SubjectCode>
+      </ns0:Subject>
+      <ns0:Subject>
+        <ns0:SubjectSchemeIdentifier>10</ns0:SubjectSchemeIdentifier>
+        <ns0:SubjectCode>FIC019000</ns0:SubjectCode>
+      </ns0:Subject>
+    </ns0:DescriptiveDetail>
+    <ns0:PublishingDetail>
+      <ns0:Publisher>
+        <ns0:PublishingRole>01</ns0:PublishingRole>
+        <ns0:PublisherName>Test Publishing House</ns0:PublisherName>
+      </ns0:Publisher>
+      <ns0:PublishingDate>
+        <ns0:PublishingDateRole>01</ns0:PublishingDateRole>
+        <ns0:Date>20241201</ns0:Date>
+      </ns0:PublishingDate>
+    </ns0:PublishingDetail>
+    <ns0:ProductSupply>
+      <ns0:SupplyDetail>
+        <ns0:Supplier>
+          <ns0:SupplierRole>09</ns0:SupplierRole>
+        </ns0:Supplier>
+        <ns0:Price>
+          <ns0:PriceType>02</ns0:PriceType>
+          <ns0:PriceAmount>24.99</ns0:PriceAmount>
+          <ns0:CurrencyCode>USD</ns0:CurrencyCode>
+        </ns0:Price>
+      </ns0:SupplyDetail>
+    </ns0:ProductSupply>
+    <ns0:ProductIdentifier>
+      <ns0:ProductIDType>15</ns0:ProductIDType>
+      <ns0:IDValue>9781234567890</ns0:IDValue>
+    </ns0:ProductIdentifier>
+  </ns0:Product>
+</ns0:ONIXMessage>

@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ONIXMessage release="3.0">
+  <Header>
+    <Sender>MetaOps Test Generator</Sender>
+    <SentDateTime>20250823T033508</SentDateTime>
+    <MessageNote>Test file - problematic completeness</MessageNote>
+  </Header>
+  <Product>
+    <RecordReference>TEST_PROBLEMATIC_9686</RecordReference>
+    <NotificationType>03</NotificationType>
+    <DescriptiveDetail>
+      <TitleDetail>
+        <TitleType>01</TitleType>
+        <TitleElement>
+          <TitleElementLevel>01</TitleElementLevel>
+          <TitleText>X</TitleText>
+        </TitleElement>
+      </TitleDetail>
+      <ProductForm>AB</ProductForm>
+    </DescriptiveDetail>
+    <PublishingDetail />
+    <ProductSupply />
+    <ProductIdentifier>
+      <ProductIDType>15</ProductIDType>
+      <IDValue>123456789</IDValue>
+    </ProductIdentifier>
+  </Product>
+</ONIXMessage>

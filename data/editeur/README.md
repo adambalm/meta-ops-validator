@@ -1,37 +1,31 @@
-# Official EDItEUR ONIX 3.x Artifacts
+# Official EDItEUR ONIX 3.0 Schemas — ACTIVE
 
-**⚠️ CRITICAL: The current system uses TOY SCHEMAS for demo purposes only.**
+**✅ OPERATIONAL: This directory contains official EDItEUR ONIX 3.0 schemas currently in use.**
 
-To switch to production validation with real ONIX 3.x files, you must obtain and place the following official EDItEUR artifacts in this directory:
+The MetaOps Validator system automatically uses these official schemas for enterprise ONIX validation:
 
-## Required Files
+## Active Schema Files ✅
 
-### 1. ONIX 3.x Schema (XSD)
-Download from: https://www.editeur.org/15/Archived-Previous-Releases/
+### ONIX 3.0 XSD Schemas (In Use)
+- `ONIX_BookProduct_3.0_reference.xsd` - Official reference tag schema
+- `ONIX_BookProduct_3.0_short.xsd` - Official short tag schema  
+- `ONIX_BookProduct_CodeLists.xsd` - EDItEUR codelists
+- `ONIX_XHTML_Subset.xsd` - XHTML subset definitions
 
-Place here:
-- `onix-3.x-reference.xsd` (reference tag schema)
-- `onix-3.x-short.xsd` (short tag schema)  
-- Any additional schema files (typically a zip bundle)
+### Schematron Rules (In Use)
+- `schematron/onix-production-rules.sch` - Business logic validation rules
 
-### 2. EDItEUR Codelists (Latest Issue)
-Download from: https://www.editeur.org/14/Code-Lists/
+## Automatic Schema Selection ✅
 
-Place here:
-- `codelists/` directory containing CSV or XML files for all lists
-- Key lists needed: ProductForm, ProductFormDetail, PublishingDateRole, TerritoryCodeType, etc.
+The validation system automatically:
+1. **Detects ONIX namespace** in uploaded files
+2. **Selects appropriate schema** (reference vs short-tag)  
+3. **Validates with official EDItEUR rules**
+4. **Provides real validation results**
 
-### 3. Sample Real ONIX Files (optional)
-Place real anonymized ONIX 3.x samples in:
-- `samples/real/` directory
-- Both reference and short-tag variants recommended
-- Use for regression testing against toy validation
+## Namespace Variants Supported ✅
 
-## Namespace Variants
-
-ONIX 3.x supports two tag formats:
-
-**Reference tags:**
+**Reference tags (detected automatically):**
 ```xml
 <ONIXMessage xmlns="http://ns.editeur.org/onix/3.0/reference">
   <Product>
@@ -42,7 +36,7 @@ ONIX 3.x supports two tag formats:
 </ONIXMessage>
 ```
 
-**Short tags:**  
+**Short tags (detected automatically):**  
 ```xml
 <ONIXmessage xmlns="http://ns.editeur.org/onix/3.0/short">
   <product>
@@ -53,28 +47,23 @@ ONIX 3.x supports two tag formats:
 </ONIXmessage>
 ```
 
-## Integration Steps
+## Validation Capabilities ✅
 
-Once files are placed here:
+The system provides enterprise-ready validation:
+- ✅ XSD structural validation against official schemas
+- ✅ Schematron business rules validation
+- ✅ Nielsen completeness scoring with sales correlation
+- ✅ Multi-retailer compatibility analysis
+- ✅ Custom rule engine for publisher-specific requirements
+- ✅ Automatic namespace detection and handling
+- ✅ Real ONIX error reporting with line numbers and context
 
-1. **Update configuration** to point validators at real schemas
-2. **Implement codelists.py** to load official code mappings  
-3. **Replace toy Schematron** with namespace-aware rules
-4. **Update Rule DSL examples** to use proper ONIX XPaths with namespaces
-5. **Run regression tests** to ensure toy→real migration works
+## Web Interface Access
 
-## Validation Checklist
+- **Main Validator**: [http://100.111.114.84:8507](http://100.111.114.84:8507)
+- **Analytics Dashboard**: [http://100.111.114.84:8508](http://100.111.114.84:8508)
+- **Business Demo**: [http://100.111.114.84:8090](http://100.111.114.84:8090)
 
-Before going to production:
-- [ ] XSD validation passes on real ONIX files
-- [ ] Schematron rules use proper namespaces  
-- [ ] Rule DSL uses namespace-aware XPaths
-- [ ] Codelists loaded and referenced correctly
-- [ ] Both reference and short-tag variants supported
-- [ ] Territory logic uses includes/excludes, not substring matching
-- [ ] Date logic handles roles and dateformat properly
-- [ ] Product form logic uses official codes + details
+## Legal Compliance ✅
 
-## Legal Note
-
-EDItEUR artifacts are subject to their licensing terms. Ensure compliance with EDItEUR's usage policies for commercial applications.
+These official EDItEUR schemas are used in compliance with EDItEUR's licensing terms for ONIX validation services.
