@@ -303,7 +303,7 @@ with col_footer2:
     st.markdown("• Rules: Contract sample set")
 
 with col_footer3:
-    st.markdown("**🚀 Production Ready**") 
+    st.markdown("**🚀 System Status**") 
     st.markdown("• EDItEUR schema migration path")
     st.markdown("• Namespace-aware XPath support")
-    st.markdown("• Enterprise deployment ready")
+    st.markdown("• Validation system operational")

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="ONIXCodeTable">
+		<xs:annotation>
+			<xs:documentation>Structure of ONIX for Books codelist file.</xs:documentation>
+			<xs:documentation>Note that the ONIX codelist file is reissued at regular intervals, typically four times per year. Each reissue is numbered, and may add new code entries and (occasionally) new codelists. Old codes and codelists are never removed, but may be deprecated.</xs:documentation>
+			<xs:documentation>● Modified from Issue 68 to remove unused &lt;CodeParent></xs:documentation>
+			<xs:documentation>● Modified from Issue 64 to add &lt;DeprecatedNumber></xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" ref="IssueNumber"/>
+				<xs:element maxOccurs="unbounded" ref="CodeList"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="CodeList">
+		<xs:annotation>
+			<xs:documentation>Defines a single ONIX codelist – a controlled vocabulary used with particular ONIX for Books data elements.</xs:documentation>
+			<xs:documentation>An ONIX codelist is conceptually similar to a SKOS ConceptScheme. It is a list of concepts, each with a notation, a label and various notes.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="CodeListNumber"/>
+				<xs:element ref="CodeListDescription"/>
+				<xs:element ref="IssueNumber"/>
+				<xs:element minOccurs="0" ref="DeprecatedNumber"/>
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="Code"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Code">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" ref="CodeNumber"/>
+				<xs:element ref="CodeValue"/>
+				<xs:element ref="CodeDescription"/>
+				<xs:element ref="CodeNotes"/>
+				<xs:element ref="IssueNumber"/>
+				<xs:element minOccurs="0" ref="ModifiedNumber"/>
+				<xs:element minOccurs="0" ref="DeprecatedNumber"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="CodeListNumber" type="xs:integer">
+		<xs:annotation>
+			<xs:documentation>Each codelist has a number used to bind it to a particular data element within the ONIX schema.</xs:documentation>
+			<xs:documentation>A few codelists are used with more than one data element.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="CodeListDescription" type="xs:string">
+		<xs:annotation>
+			<xs:documentation>A name for the codelist, or a description of how it is used.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="IssueNumber" type="xs:string">
+		<xs:annotation>
+			<xs:documentation>The codelist issue at which the code or codelist was first introduced (normally an integer). Also used to specify the issue number of the set of codelists.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="ModifiedNumber" type="xs:string">
+		<xs:annotation>
+			<xs:documentation>The codelist issue at which the code was most recently modified (normally an integer).</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="DeprecatedNumber" type="xs:string">
+		<xs:annotation>
+			<xs:documentation>The codelist issue at which the code or codelist was deprecated (normally an integer).</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="CodeNumber" type="xs:integer">
+		<xs:annotation>
+			<xs:documentation>Defines the sequence of entries or concepts within the codelist, essentially for display purposes only.</xs:documentation>
+			<xs:documentation>When presented (for example) as a menu within an application, the particular order of concepts is not critical, nor particularly meaningful. However, most codelists are ordered for ease of management and use.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="CodeValue" type="xs:token">
+		<xs:annotation>
+			<xs:documentation>The notation used for the concept in an ONIX data file.</xs:documentation>
+			<xs:documentation>Notations should be dealt with as tokens or strings – they are alphanumeric, and leading zeros are critical.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="CodeDescription" type="xs:string">
+		<xs:annotation>
+			<xs:documentation>The preferred English language label used for the concept, for example in a menu within an application.</xs:documentation>
+			<xs:documentation>Translations of the label text may be available, and alternative labels may be used (for example within application menus) provided that the meaning of the overall concept is not changed.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="CodeNotes" type="xs:string">
+		<xs:annotation>
+			<xs:documentation>Explanatory notes defining the concept or scoping use of the concept.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+</xs:schema>

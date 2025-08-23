@@ -15,7 +15,7 @@ RETAILER_PROFILES = {
         'critical_fields': ['isbn', 'title', 'contributors', 'description', 'product_form', 'price'],
         'recommended_fields': ['subject_codes', 'series', 'cover_image', 'publication_date'],
         'weights': {
-            'isbn': 25, 'title': 20, 'contributors': 15, 'description': 15, 
+            'isbn': 25, 'title': 20, 'contributors': 15, 'description': 15,
             'product_form': 10, 'price': 10, 'subject_codes': 3, 'series': 2
         },
         'discovery_boost': ['subject_codes', 'series', 'description'],
@@ -81,11 +81,11 @@ RETAILER_PROFILES = {
 def calculate_retailer_score(onix_path: Path, retailer: str) -> Dict:
     """
     Calculate retailer-specific metadata completeness score.
-    
+
     Args:
         onix_path: Path to ONIX file
         retailer: Retailer profile key (amazon, ingram, etc.)
-    
+
     Returns:
         Dict with retailer-specific scoring results
     """
@@ -94,21 +94,21 @@ def calculate_retailer_score(onix_path: Path, retailer: str) -> Dict:
             "error": f"Unknown retailer profile: {retailer}",
             "available_profiles": list(RETAILER_PROFILES.keys())
         }
-    
+
     profile = RETAILER_PROFILES[retailer]
     namespace_uri, is_real_onix = detect_onix_namespace(onix_path)
     nsmap = get_namespace_map(namespace_uri)
-    
+
     try:
         xml_doc = etree.parse(str(onix_path))
         root = xml_doc.getroot()
-        
+
         # Find product nodes
         if namespace_uri:
             products = root.xpath("//onix:Product", namespaces=nsmap)
         else:
             products = root.xpath("//Product")
-        
+
         if not products:
             return {
                 "retailer": profile['name'],
@@ -117,51 +117,98 @@ def calculate_retailer_score(onix_path: Path, retailer: str) -> Dict:
                 "critical_missing": profile['critical_fields'],
                 "risk_level": "HIGH"
             }
-        
-        # Score first product
-        product = products[0]
-        field_scores = {}
-        total_score = 0
-        missing_critical = []
-        missing_recommended = []
-        
-        # Score each field in the retailer's weight system
-        for field, weight in profile['weights'].items():
-            score = _score_field_for_retailer(product, field, nsmap, namespace_uri)
-            field_scores[field] = {
-                'score': score,
-                'weight': weight,
-                'weighted_score': score * (weight / 100) if score > 0 else 0
+
+        # Score all products and calculate aggregate metrics
+        all_products_scores = []
+
+        for product_index, product in enumerate(products):
+            field_scores = {}
+            total_score = 0
+            missing_critical = []
+            missing_recommended = []
+
+            # Score each field in the retailer's weight system
+            for field, weight in profile['weights'].items():
+                score = _score_field_for_retailer(product, field, nsmap, namespace_uri)
+                field_scores[field] = {
+                    'score': score,
+                    'weight': weight,
+                    'weighted_score': score * (weight / 100) if score > 0 else 0
+                }
+
+                if score > 0:
+                    total_score += field_scores[field]['weighted_score']
+                else:
+                    if field in profile['critical_fields']:
+                        missing_critical.append(field)
+                    elif field in profile['recommended_fields']:
+                        missing_recommended.append(field)
+
+            # Calculate additional insights for this product
+            discovery_score = _calculate_discovery_score(field_scores, profile['discovery_boost'])
+            risk_assessment = _assess_retailer_risk(missing_critical, profile)
+
+            # Store product result
+            product_result = {
+                "product_index": product_index,
+                "overall_score": round(total_score, 1),
+                "field_breakdown": field_scores,
+                "critical_missing": missing_critical,
+                "recommended_missing": missing_recommended,
+                "discovery_score": discovery_score,
+                "risk_level": risk_assessment['level'],
+                "risk_factors": risk_assessment['factors'],
+                "compliance_status": _get_compliance_status(missing_critical, profile)
             }
-            
-            if score > 0:
-                total_score += field_scores[field]['weighted_score']
-            else:
-                if field in profile['critical_fields']:
-                    missing_critical.append(field)
-                elif field in profile['recommended_fields']:
-                    missing_recommended.append(field)
-        
-        # Calculate additional insights
-        discovery_score = _calculate_discovery_score(field_scores, profile['discovery_boost'])
-        risk_assessment = _assess_retailer_risk(missing_critical, profile)
-        recommendations = _generate_retailer_recommendations(missing_critical, missing_recommended, profile)
-        
-        return {
-            "retailer": profile['name'],
-            "retailer_key": retailer,
-            "overall_score": round(total_score, 1),
-            "max_possible": 100,
-            "field_breakdown": field_scores,
-            "critical_missing": missing_critical,
-            "recommended_missing": missing_recommended,
-            "discovery_score": discovery_score,
-            "risk_level": risk_assessment['level'],
-            "risk_factors": risk_assessment['factors'],
-            "recommendations": recommendations,
-            "compliance_status": _get_compliance_status(missing_critical, profile)
-        }
-        
+            all_products_scores.append(product_result)
+
+        # Calculate aggregate metrics across all products
+        if all_products_scores:
+            avg_score = sum(p["overall_score"] for p in all_products_scores) / len(all_products_scores)
+            min_score = min(p["overall_score"] for p in all_products_scores)
+            max_score = max(p["overall_score"] for p in all_products_scores)
+
+            # Aggregate missing elements
+            all_critical_missing = set()
+            all_recommended_missing = set()
+            for product_score in all_products_scores:
+                all_critical_missing.update(product_score["critical_missing"])
+                all_recommended_missing.update(product_score["recommended_missing"])
+
+            # Generate recommendations based on aggregate data
+            recommendations = _generate_retailer_recommendations(
+                list(all_critical_missing), list(all_recommended_missing), profile
+            )
+
+            # Determine overall risk level (highest risk across products)
+            risk_levels = [p["risk_level"] for p in all_products_scores]
+            overall_risk = "HIGH" if "HIGH" in risk_levels else ("MEDIUM" if "MEDIUM" in risk_levels else "LOW")
+
+            return {
+                "retailer": profile['name'],
+                "retailer_key": retailer,
+                "overall_score": round(avg_score, 1),
+                "min_score": min_score,
+                "max_score": max_score,
+                "products_count": len(all_products_scores),
+                "max_possible": 100,
+                "products_scores": all_products_scores,
+                "critical_missing": list(all_critical_missing),
+                "recommended_missing": list(all_recommended_missing),
+                "risk_level": overall_risk,
+                "recommendations": recommendations,
+                "compliance_status": _get_compliance_status(list(all_critical_missing), profile)
+            }
+        else:
+            return {
+                "retailer": profile['name'],
+                "retailer_key": retailer,
+                "overall_score": 0,
+                "products_count": 0,
+                "message": "No products processed",
+                "risk_level": "UNKNOWN"
+            }
+
     except Exception as e:
         return {
             "retailer": profile['name'],
@@ -176,32 +223,32 @@ def calculate_multi_retailer_score(onix_path: Path, retailers: Optional[List[str
     """
     if retailers is None:
         retailers = list(RETAILER_PROFILES.keys())
-    
+
     retailer_scores = {}
-    
+
     for retailer in retailers:
         if retailer in RETAILER_PROFILES:
             retailer_scores[retailer] = calculate_retailer_score(onix_path, retailer)
-    
+
     if not retailer_scores:
         return {"error": "No valid retailer profiles provided"}
-    
+
     # Calculate comparative metrics
     scores = [(k, v.get('overall_score', 0)) for k, v in retailer_scores.items() if 'overall_score' in v]
-    
+
     if scores:
         avg_score = sum(score for _, score in scores) / len(scores)
         best_fit = max(scores, key=lambda x: x[1])
         worst_fit = min(scores, key=lambda x: x[1])
-        
-        # Find common missing fields across retailers  
+
+        # Find common missing fields across retailers
         all_missing = []
         for retailer_data in retailer_scores.values():
             if 'critical_missing' in retailer_data:
                 all_missing.extend(retailer_data['critical_missing'])
-        
+
         common_gaps = list(set(field for field in all_missing if all_missing.count(field) >= len(retailers) // 2))
-        
+
         return {
             "file": onix_path.name,
             "retailers_analyzed": len(retailer_scores),
@@ -214,7 +261,7 @@ def calculate_multi_retailer_score(onix_path: Path, retailers: Optional[List[str
             "retailer_details": retailer_scores,
             "recommendation": _generate_multi_retailer_recommendation(retailer_scores, common_gaps)
         }
-    
+
     return {"error": "Unable to calculate comparative metrics", "retailer_details": retailer_scores}
 
 def _score_field_for_retailer(product, field: str, nsmap: Dict[str, str], namespace_uri: Optional[str]) -> int:
@@ -225,7 +272,7 @@ def _score_field_for_retailer(product, field: str, nsmap: Dict[str, str], namesp
         _score_subjects, _score_product_form, _score_price, _score_publication_date,
         _score_publisher, _score_imprint, _score_series, _score_cover_image
     )
-    
+
     field_scorers = {
         'isbn': _score_isbn,
         'title': _score_title,
@@ -240,64 +287,64 @@ def _score_field_for_retailer(product, field: str, nsmap: Dict[str, str], namesp
         'series': _score_series,
         'cover_image': _score_cover_image
     }
-    
+
     if field in field_scorers:
         score = field_scorers[field](product, nsmap, namespace_uri)
         return 100 if score > 0 else 0  # Binary scoring for retailer profiles
-    
+
     return 0
 
 def _calculate_discovery_score(field_scores: Dict, discovery_fields: List[str]) -> float:
     """Calculate discovery optimization score based on retailer's algorithm preferences."""
     discovery_total = 0
     discovery_possible = 0
-    
+
     for field in discovery_fields:
         if field in field_scores:
             discovery_total += field_scores[field]['weighted_score']
             discovery_possible += field_scores[field]['weight']
-    
+
     return round((discovery_total / discovery_possible * 100) if discovery_possible > 0 else 0, 1)
 
 def _assess_retailer_risk(missing_critical: List[str], profile: Dict) -> Dict:
     """Assess risk level for specific retailer based on missing critical fields."""
     critical_count = len(missing_critical)
     total_critical = len(profile['critical_fields'])
-    
+
     if critical_count == 0:
         return {"level": "LOW", "factors": ["All critical fields present"]}
     elif critical_count <= total_critical * 0.3:
         return {"level": "MEDIUM", "factors": [f"Missing {critical_count} critical fields", "May affect discoverability"]}
     else:
         factors = [f"Missing {critical_count} critical fields", "High rejection risk"]
-        
+
         # Check for buy button / distribution risks
         if any(field in missing_critical for field in ['isbn', 'price', 'product_form']):
             factors.append("Buy button functionality at risk")
-        
+
         return {"level": "HIGH", "factors": factors}
 
 def _generate_retailer_recommendations(critical_missing: List[str], recommended_missing: List[str], profile: Dict) -> List[str]:
     """Generate actionable recommendations for retailer compliance."""
     recommendations = []
-    
+
     if critical_missing:
         recommendations.append(f"CRITICAL: Add missing required fields: {', '.join(critical_missing[:5])}")
-    
+
     if recommended_missing:
         recommendations.append(f"OPTIMIZE: Add recommended fields for better discovery: {', '.join(recommended_missing[:3])}")
-    
+
     # Retailer-specific advice
     retailer_name = profile['name']
     if 'amazon' in retailer_name.lower() and 'description' in critical_missing:
         recommendations.append("Amazon requires rich descriptions for search ranking")
-    
+
     if 'ingram' in retailer_name.lower() and 'publisher' in critical_missing:
         recommendations.append("IngramSpark requires publisher info for distribution")
-    
+
     if not recommendations:
         recommendations.append(f"Excellent! Meets all {retailer_name} requirements")
-    
+
     return recommendations
 
 def _get_compliance_status(missing_critical: List[str], profile: Dict) -> str:
@@ -313,5 +360,5 @@ def _generate_multi_retailer_recommendation(retailer_scores: Dict, common_gaps: 
     """Generate recommendation based on multi-retailer analysis."""
     if not common_gaps:
         return "Good cross-retailer compatibility. Consider optimizing for your primary sales channels."
-    
+
     return f"Priority: Fix common gaps across retailers: {', '.join(common_gaps[:5])}. This will improve acceptance rates across all platforms."

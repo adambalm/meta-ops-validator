@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 
 def create_onix_file(completeness_level: str, filename: str, use_namespace: bool = True):
     """Create ONIX file with specified completeness level."""
-    
+
     # Namespace setup
     if use_namespace:
         root_attrs = {
@@ -21,35 +21,35 @@ def create_onix_file(completeness_level: str, filename: str, use_namespace: bool
     else:
         root_attrs = {'release': '3.0'}
         ns = ''
-    
+
     # Create root element
     root = ET.Element(f'{ns}ONIXMessage', root_attrs)
-    
+
     # Header
     header = ET.SubElement(root, f'{ns}Header')
     ET.SubElement(header, f'{ns}Sender').text = 'MetaOps Test Generator'
     ET.SubElement(header, f'{ns}SentDateTime').text = datetime.now().strftime('%Y%m%dT%H%M%S')
     ET.SubElement(header, f'{ns}MessageNote').text = f'Test file - {completeness_level} completeness'
-    
+
     # Product
     product = ET.SubElement(root, f'{ns}Product')
-    
+
     # Record reference
     ET.SubElement(product, f'{ns}RecordReference').text = f'TEST_{completeness_level.upper()}_{random.randint(1000, 9999)}'
-    
+
     # Notification type
     ET.SubElement(product, f'{ns}NotificationType').text = '03'  # Early notification
-    
+
     # Always include basic structure
     descriptive_detail = ET.SubElement(product, f'{ns}DescriptiveDetail')
     publishing_detail = ET.SubElement(product, f'{ns}PublishingDetail')
     product_supply = ET.SubElement(product, f'{ns}ProductSupply')
-    
+
     # Completeness-based content
     if completeness_level == 'minimal':
         # Just the bare minimum
         _add_product_form(descriptive_detail, ns, 'BC')  # Book
-        
+
     elif completeness_level == 'basic':
         # Core fields for basic validation
         _add_isbn(product, ns, '9781234567890')
@@ -57,7 +57,7 @@ def create_onix_file(completeness_level: str, filename: str, use_namespace: bool
         _add_contributor(descriptive_detail, ns, 'Test Author')
         _add_product_form(descriptive_detail, ns, 'BC')
         _add_price(product_supply, ns, '19.99')
-        
+
     elif completeness_level == 'good':
         # Nielsen target level (75%+)
         _add_isbn(product, ns, '9781234567890')
@@ -69,7 +69,7 @@ def create_onix_file(completeness_level: str, filename: str, use_namespace: bool
         _add_publisher(publishing_detail, ns, 'Test Publishing House')
         _add_publication_date(publishing_detail, ns, '20241201')
         _add_price(product_supply, ns, '24.99')
-        
+
     elif completeness_level == 'excellent':
         # Maximum completeness (90%+)
         _add_isbn(product, ns, '9781234567890')
@@ -85,24 +85,24 @@ def create_onix_file(completeness_level: str, filename: str, use_namespace: bool
         _add_series(descriptive_detail, ns, 'Metadata Management Series', '1')
         _add_price(product_supply, ns, '34.99')
         _add_cover_image(descriptive_detail, ns, 'https://example.com/covers/test-book-cover.jpg')
-        
+
     elif completeness_level == 'problematic':
         # Designed to trigger validation errors
         _add_isbn(product, ns, '123456789')  # Invalid ISBN format
         _add_title(descriptive_detail, ns, 'X')  # Too short
         _add_product_form(descriptive_detail, ns, 'AB')  # Audio format (triggers demo rule)
         # Missing critical fields intentionally
-        
+
     # Write file
     tree = ET.ElementTree(root)
     ET.indent(tree, space="  ", level=0)  # Pretty print
-    
+
     output_path = Path(filename)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     with open(output_path, 'wb') as f:
         tree.write(f, encoding='utf-8', xml_declaration=True)
-    
+
     print(f"Created {completeness_level} ONIX file: {filename}")
 
 def _add_isbn(product, ns: str, isbn: str):
@@ -193,12 +193,12 @@ def _add_cover_image(descriptive_detail, ns: str, url: str):
 
 def main():
     """Generate complete test suite."""
-    
+
     test_dir = Path('test_onix_files')
     test_dir.mkdir(exist_ok=True)
-    
+
     print("🔄 Generating ONIX test files...")
-    
+
     # Generate files with different completeness levels
     test_cases = [
         ('minimal', 'Should score very low, basic validation pass'),
@@ -207,20 +207,20 @@ def main():
         ('excellent', 'Should score 90%+, maximum completeness'),
         ('problematic', 'Should trigger validation errors and warnings')
     ]
-    
+
     for level, description in test_cases:
         # Both namespaced and non-namespaced versions
         create_onix_file(level, f'{test_dir}/{level}_namespaced.xml', use_namespace=True)
         create_onix_file(level, f'{test_dir}/{level}_simple.xml', use_namespace=False)
-    
+
     # Create batch test set
     batch_dir = test_dir / 'batch_test'
     batch_dir.mkdir(exist_ok=True)
-    
+
     for i in range(5):
         level = random.choice(['basic', 'good', 'excellent'])
         create_onix_file(level, f'{batch_dir}/book_{i+1:02d}_{level}.xml', use_namespace=True)
-    
+
     print(f"\n✅ Generated {len(list(test_dir.glob('**/*.xml')))} test files in {test_dir}/")
     print(f"📁 Batch testing files in {batch_dir}/")
     print(f"\n🧪 Test commands:")

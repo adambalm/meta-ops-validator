@@ -28,11 +28,16 @@ Tag all metrics: [verified] or [inference].
 Pure Tufte CSS. No chartjunk.
 
 ### Language Guidelines (INVARIANT)
-System uses official EDItEUR ONIX 3.0 schemas for real validation.
-Use: "operational", "complete", "mature", "enterprise-ready".
+NEVER use these terms in code or documentation:
+- "production-ready" / "production ready" 
+- "enterprise-ready" / "enterprise ready"
+- "enterprise-grade" / "enterprise grade"
+- Similar exaggerated claims
+
+Use realistic language: "operational", "functional", "working", "complete".
 
 ### Web Services (CURRENT)
-Enterprise-ready ONIX validation interfaces:
+ONIX validation interfaces:
 - Main Validator: http://100.111.114.84:8507 (streamlit_app.py) - Single file validation with tooltips
 - Analytics Dashboard: http://100.111.114.84:8508 (dashboard.py) - Batch processing and analytics
 - Business Demo: http://100.111.114.84:8090 (streamlit_business_demo.py) - Stakeholder presentations

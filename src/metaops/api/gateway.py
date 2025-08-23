@@ -81,16 +81,16 @@ batch_counter = 0
 async def audit_middleware(request, call_next):
     """Audit logging middleware"""
     start_time = time.time()
-    
+
     # Log request
     logging.info(f"API Request: {request.method} {request.url.path}")
-    
+
     response = await call_next(request)
-    
+
     # Log response timing
     process_time = time.time() - start_time
     logging.info(f"API Response: {response.status_code} ({process_time:.3f}s)")
-    
+
     return response
 
 @app.get("/health")
@@ -101,7 +101,7 @@ async def health_check():
         "timestamp": time.time(),
         "services": {
             "xsd_validator": "operational",
-            "schematron_validator": "operational", 
+            "schematron_validator": "operational",
             "rule_engine": "operational"
         }
     }
@@ -115,50 +115,50 @@ async def validate_realtime(
     global validation_counter
     validation_counter += 1
     validation_id = f"val_{validation_counter}"
-    
+
     start_time = time.time()
-    
+
     try:
         # Write ONIX data to temp file for processing
         with tempfile.NamedTemporaryFile(mode='w', suffix='.xml', delete=False) as f:
             f.write(request.onix_data)
             temp_onix_path = Path(f.name)
-        
+
         # Detect validation level and run appropriate pipeline
         results = {}
-        
+
         if request.validation_level in ["full", "fast"]:
             # XSD validation (fastest)
             xsd_path = Path("data/samples/onix_samples/onix.xsd")
             if xsd_path.exists():
                 results["xsd_validation"] = validate_xsd(temp_onix_path, xsd_path)
-        
+
         if request.validation_level == "full":
             # Schematron validation
-            sch_path = Path("data/samples/onix_samples/rules.sch") 
+            sch_path = Path("data/samples/onix_samples/rules.sch")
             if sch_path.exists():
                 results["schematron_validation"] = validate_schematron(temp_onix_path, sch_path)
-            
+
             # Rule engine validation
             rules_path = Path("diagnostic/rules.sample.yml")
             if rules_path.exists():
                 results["rule_engine_results"] = evaluate_rules(temp_onix_path, rules_path)
-        
+
         # Retailer compatibility check
         if "all" not in request.retailer_profiles:
             results["retailer_compatibility"] = await check_retailer_compatibility(
                 temp_onix_path, request.retailer_profiles
             )
-        
+
         # Clean up temp file
         temp_onix_path.unlink()
-        
+
         processing_time_ms = int((time.time() - start_time) * 1000)
-        
+
         # SLA compliance check
         sla_target_ms = 30000
         sla_met = processing_time_ms < sla_target_ms
-        
+
         return ValidationResult(
             validation_id=validation_id,
             status="completed",
@@ -170,7 +170,7 @@ async def validate_realtime(
                 "met": sla_met
             }
         )
-        
+
     except Exception as e:
         processing_time_ms = int((time.time() - start_time) * 1000)
         raise HTTPException(
@@ -193,7 +193,7 @@ async def validate_batch(
     global batch_counter
     batch_counter += 1
     batch_id = f"batch_{batch_counter}"
-    
+
     # Queue batch processing
     background_tasks.add_task(
         process_batch_validation,
@@ -201,7 +201,7 @@ async def validate_batch(
         request,
         tenant
     )
-    
+
     return {
         "batch_id": batch_id,
         "status": "queued",
@@ -213,10 +213,10 @@ async def process_batch_validation(batch_id: str, request: BatchValidationReques
     """Background task for batch processing"""
     # TODO: Implement actual batch processing
     logging.info(f"Processing batch {batch_id} for tenant {tenant['tenant_id']}")
-    
+
     # Simulate processing
     await asyncio.sleep(10)
-    
+
     # TODO: Send webhook notification if provided
     if request.notification_webhook:
         logging.info(f"Would send webhook to {request.notification_webhook}")
@@ -245,7 +245,7 @@ async def validate_and_submit_retailer(
 ):
     """Validate ONIX and optionally submit to retailer APIs"""
     validation_id = f"retailer_val_{int(time.time())}"
-    
+
     try:
         # First validate the ONIX
         validation_request = ValidationRequest(
@@ -253,9 +253,9 @@ async def validate_and_submit_retailer(
             validation_level="full",
             retailer_profiles=request.target_retailers
         )
-        
+
         validation_result = await validate_realtime(validation_request, tenant)
-        
+
         # Check if validation passed for submission
         submission_results = {}
         if request.submit_if_valid and validation_result.status == "completed":
@@ -266,7 +266,7 @@ async def validate_and_submit_retailer(
                     request.retailer_credentials.get(retailer, {})
                 )
                 submission_results[retailer] = submission_result
-        
+
         return {
             "validation_results": validation_result.dict(),
             "retailer_submissions": submission_results,
@@ -275,7 +275,7 @@ async def validate_and_submit_retailer(
                 "status": "compliant"  # TODO: Implement contract checking
             }
         }
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -289,7 +289,7 @@ async def check_retailer_compatibility(onix_path: Path, retailers: List[str]) ->
     """Check ONIX compatibility with specific retailer requirements"""
     # TODO: Implement retailer-specific validation logic
     compatibility = {}
-    
+
     for retailer in retailers:
         if retailer == "amazon_kdp":
             compatibility[retailer] = {
@@ -299,7 +299,7 @@ async def check_retailer_compatibility(onix_path: Path, retailers: List[str]) ->
             }
         elif retailer == "ingram_spark":
             compatibility[retailer] = {
-                "compatible": True, 
+                "compatible": True,
                 "warnings": [],
                 "required_fields_present": True
             }
@@ -308,13 +308,13 @@ async def check_retailer_compatibility(onix_path: Path, retailers: List[str]) ->
                 "compatible": False,
                 "errors": [f"Unknown retailer profile: {retailer}"]
             }
-    
+
     return compatibility
 
 async def submit_to_retailer(onix_data: str, retailer: str, credentials: dict) -> Dict:
     """Submit ONIX data to retailer API"""
     # TODO: Implement actual retailer API integration
-    
+
     if retailer == "amazon_kdp":
         return {
             "status": "submitted",
@@ -323,7 +323,7 @@ async def submit_to_retailer(onix_data: str, retailer: str, credentials: dict) -
         }
     elif retailer == "ingram_spark":
         return {
-            "status": "submitted", 
+            "status": "submitted",
             "confirmation": f"ISP{int(time.time())}",
             "estimated_processing": "2-4 hours"
         }
@@ -342,7 +342,7 @@ async def get_sla_dashboard(tenant: dict = Depends(verify_token)):
             "realtime_validation": {
                 "target_ms": 30000,
                 "p50_ms": 12500,
-                "p95_ms": 28000, 
+                "p95_ms": 28000,
                 "p99_ms": 29500,
                 "sla_compliance_percent": 99.2,
                 "total_requests": validation_counter
@@ -375,18 +375,18 @@ async def aem_preview_validation(
             validation_level="fast",
             retailer_profiles=preview_context.get("intended_retailers", ["all"])
         )
-        
+
         # Mock tenant for AEM integration
         mock_tenant = {"tenant_id": "aem_integration", "permissions": ["validate"]}
         validation_result = await validate_realtime(validation_request, mock_tenant)
-        
+
         # Format for AEM preview panel
         preview_status = "valid"
         if validation_result.results:
             error_count = sum(len(v) for v in validation_result.results.values() if isinstance(v, list))
             if error_count > 0:
                 preview_status = "errors" if error_count > 5 else "warnings"
-        
+
         return {
             "preview_status": preview_status,
             "validation_summary": {
@@ -397,13 +397,13 @@ async def aem_preview_validation(
             "preview_feedback": [
                 {
                     "type": "warning",
-                    "field": "PublishingDate", 
+                    "field": "PublishingDate",
                     "message": "Date is 60+ days in future, may affect retailer priority",
                     "suggestion": "Consider adjusted date for faster listing"
                 }
             ]
         }
-        
+
     except Exception as e:
         return {
             "preview_status": "errors",

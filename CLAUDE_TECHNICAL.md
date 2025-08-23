@@ -27,7 +27,7 @@ The `src/metaops/onix_utils.py` module provides critical namespace detection:
 ### Data Sources
 - **Toy Data**: `data/samples/onix_samples/` - Demo files for development/testing
 - **Production Migration**: `data/editeur/` - Directory for official EDItEUR schemas and codelists
-- **Rules**: `diagnostic/` - Contains both toy and production-ready rule examples
+- **Rules**: `diagnostic/` - Contains both toy and operational rule examples
 
 ### Output Formats
 Validation results are output as structured data via reporters in `src/metaops/reporters/`:

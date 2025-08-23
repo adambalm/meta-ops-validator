@@ -23,7 +23,7 @@ class ValidationRule:
     error_message: str = ""
     severity: str = "error"  # error|warning|info
 
-@dataclass 
+@dataclass
 class RetailerConstraint:
     """Retailer-specific business constraint"""
     constraint_id: str
@@ -34,51 +34,51 @@ class RetailerConstraint:
 
 class RetailerProfile(ABC):
     """Base class for retailer-specific validation profiles"""
-    
+
     def __init__(self):
         self.retailer_name: str = ""
         self.api_base_url: str = ""
         self.validation_rules: List[ValidationRule] = []
         self.constraints: List[RetailerConstraint] = []
         self.required_namespaces: Dict[str, str] = {}
-    
+
     @abstractmethod
     async def validate_onix(self, onix_data: str) -> Dict[str, Any]:
         """Validate ONIX against retailer-specific requirements"""
         pass
-    
+
     @abstractmethod
     async def submit_onix(self, onix_data: str, credentials: Dict) -> Dict[str, Any]:
         """Submit validated ONIX to retailer API"""
         pass
-    
+
     def get_namespace_aware_xpath(self, xpath: str) -> str:
         """Convert XPath to namespace-aware format"""
         # Replace common ONIX elements with namespace prefixes
         replacements = {
             "//Product": "//onix:Product",
-            "//RecordReference": "//onix:RecordReference", 
+            "//RecordReference": "//onix:RecordReference",
             "//ProductIdentifier": "//onix:ProductIdentifier",
             "//DescriptiveDetail": "//onix:DescriptiveDetail",
             "//PublishingDetail": "//onix:PublishingDetail",
             "//ProductSupply": "//onix:ProductSupply"
         }
-        
+
         namespace_xpath = xpath
         for old, new in replacements.items():
             namespace_xpath = namespace_xpath.replace(old, new)
-        
+
         return namespace_xpath
-    
+
     def evaluate_xpath_rule(self, xml_doc: etree._ElementTree, rule: ValidationRule) -> List[Dict]:
         """Evaluate single XPath rule against ONIX document"""
         findings = []
-        
+
         try:
             # Use namespace-aware XPath
             ns_xpath = self.get_namespace_aware_xpath(rule.xpath_expression)
             result = xml_doc.xpath(ns_xpath, namespaces=self.required_namespaces)
-            
+
             if rule.constraint_type == "required" and not result:
                 findings.append({
                     "rule_id": rule.rule_id,
@@ -88,7 +88,7 @@ class RetailerProfile(ABC):
                 })
             elif rule.constraint_type == "forbidden" and result:
                 findings.append({
-                    "rule_id": rule.rule_id, 
+                    "rule_id": rule.rule_id,
                     "severity": rule.severity,
                     "message": rule.error_message or f"Forbidden field present: {rule.xpath_expression}",
                     "xpath": rule.xpath_expression
@@ -98,12 +98,12 @@ class RetailerProfile(ABC):
                     if element.text != rule.expected_value:
                         findings.append({
                             "rule_id": rule.rule_id,
-                            "severity": rule.severity, 
+                            "severity": rule.severity,
                             "message": rule.error_message or f"Expected '{rule.expected_value}', found '{element.text}'",
                             "xpath": rule.xpath_expression,
                             "actual_value": element.text
                         })
-                        
+
         except Exception as e:
             findings.append({
                 "rule_id": rule.rule_id,
@@ -111,18 +111,18 @@ class RetailerProfile(ABC):
                 "message": f"XPath evaluation failed: {str(e)}",
                 "xpath": rule.xpath_expression
             })
-        
+
         return findings
 
 class AmazonKDPProfile(RetailerProfile):
     """Amazon Kindle Direct Publishing validation profile"""
-    
+
     def __init__(self):
         super().__init__()
         self.retailer_name = "Amazon KDP"
         self.api_base_url = "https://kdp-api.amazon.com/v1"
         self.required_namespaces = {"onix": "http://ns.editeur.org/onix/3.0/reference"}
-        
+
         # Amazon KDP specific validation rules
         self.validation_rules = [
             ValidationRule(
@@ -132,7 +132,7 @@ class AmazonKDPProfile(RetailerProfile):
                 error_message="ISBN-13 is required for Amazon KDP submissions"
             ),
             ValidationRule(
-                rule_id="amazon_territory_us_only", 
+                rule_id="amazon_territory_us_only",
                 xpath_expression="//ProductSupply/Market/Territory/CountriesIncluded",
                 constraint_type="value",
                 expected_value="US",
@@ -142,7 +142,7 @@ class AmazonKDPProfile(RetailerProfile):
             ValidationRule(
                 rule_id="amazon_digital_format_required",
                 xpath_expression="//ProductForm",
-                constraint_type="value", 
+                constraint_type="value",
                 expected_value="ED",  # Digital/Electronic
                 error_message="Amazon KDP requires digital format designation"
             ),
@@ -154,7 +154,7 @@ class AmazonKDPProfile(RetailerProfile):
                 severity="warning"
             )
         ]
-        
+
         # Business constraints
         self.constraints = [
             RetailerConstraint(
@@ -171,7 +171,7 @@ class AmazonKDPProfile(RetailerProfile):
                 ]
             ),
             RetailerConstraint(
-                constraint_id="amazon_content_restrictions", 
+                constraint_id="amazon_content_restrictions",
                 category="metadata",
                 description="Amazon content policy compliance",
                 validation_rules=[
@@ -186,24 +186,24 @@ class AmazonKDPProfile(RetailerProfile):
                 ]
             )
         ]
-    
+
     async def validate_onix(self, onix_data: str) -> Dict[str, Any]:
         """Validate ONIX against Amazon KDP requirements"""
         findings = []
-        
+
         try:
             # Parse ONIX XML
             xml_doc = etree.fromstring(onix_data.encode())
             doc_tree = etree.ElementTree(xml_doc)
-            
+
             # Run all validation rules
             for rule in self.validation_rules:
                 rule_findings = self.evaluate_xpath_rule(doc_tree, rule)
                 findings.extend(rule_findings)
-            
+
             # Additional Amazon-specific checks
             findings.extend(await self._check_amazon_specific_requirements(doc_tree))
-            
+
             return {
                 "retailer": self.retailer_name,
                 "validation_status": "passed" if not any(f["severity"] == "error" for f in findings) else "failed",
@@ -211,7 +211,7 @@ class AmazonKDPProfile(RetailerProfile):
                 "total_errors": len([f for f in findings if f["severity"] == "error"]),
                 "total_warnings": len([f for f in findings if f["severity"] == "warning"])
             }
-            
+
         except Exception as e:
             return {
                 "retailer": self.retailer_name,
@@ -219,11 +219,11 @@ class AmazonKDPProfile(RetailerProfile):
                 "error": f"Validation failed: {str(e)}",
                 "findings": []
             }
-    
+
     async def _check_amazon_specific_requirements(self, xml_doc: etree._ElementTree) -> List[Dict]:
         """Amazon-specific business logic validation"""
         findings = []
-        
+
         # Check for DRM-protected content indicators
         drm_indicators = xml_doc.xpath("//EpubTechnicalProtection", namespaces=self.required_namespaces)
         if drm_indicators:
@@ -235,15 +235,15 @@ class AmazonKDPProfile(RetailerProfile):
                         "message": "DRM protection detected - ensure Amazon KDP compatibility",
                         "xpath": "//EpubTechnicalProtection"
                     })
-        
+
         # Check publication date for pre-orders
         pub_dates = xml_doc.xpath("//PublishingDate[PublishingDateRole='01']/Date", namespaces=self.required_namespaces)
         if pub_dates:
             # TODO: Implement date parsing and future date checking
             pass
-        
+
         return findings
-    
+
     async def submit_onix(self, onix_data: str, credentials: Dict) -> Dict[str, Any]:
         """Submit ONIX to Amazon KDP API"""
         try:
@@ -253,16 +253,16 @@ class AmazonKDPProfile(RetailerProfile):
                     "status": "failed",
                     "error": "Missing Amazon KDP API credentials"
                 }
-            
+
             # TODO: Implement actual Amazon KDP API submission
             # This would require:
             # 1. OAuth authentication with Amazon
             # 2. ONIX to Amazon-specific format conversion
             # 3. API endpoint calls with proper error handling
-            
+
             # For now, simulate successful submission
             await asyncio.sleep(2)  # Simulate API call
-            
+
             return {
                 "status": "submitted",
                 "confirmation_id": f"AMZ-{int(asyncio.get_event_loop().time())}",
@@ -270,7 +270,7 @@ class AmazonKDPProfile(RetailerProfile):
                 "estimated_processing": "24-48 hours",
                 "tracking_url": "https://kdp.amazon.com/submissions/12345"
             }
-            
+
         except Exception as e:
             return {
                 "status": "failed",
@@ -279,19 +279,19 @@ class AmazonKDPProfile(RetailerProfile):
 
 class IngramSparkProfile(RetailerProfile):
     """IngramSpark distribution validation profile"""
-    
+
     def __init__(self):
         super().__init__()
         self.retailer_name = "IngramSpark"
         self.api_base_url = "https://api.ingramspark.com/v1"
         self.required_namespaces = {"onix": "http://ns.editeur.org/onix/3.0/reference"}
-        
+
         # IngramSpark specific validation rules
         self.validation_rules = [
             ValidationRule(
                 rule_id="ingram_isbn_required",
                 xpath_expression="//ProductIdentifier[ProductIDType='15']/IDValue",
-                constraint_type="required", 
+                constraint_type="required",
                 error_message="ISBN-13 required for IngramSpark distribution"
             ),
             ValidationRule(
@@ -313,23 +313,23 @@ class IngramSparkProfile(RetailerProfile):
                 error_message="Physical dimensions required for print books"
             )
         ]
-    
+
     async def validate_onix(self, onix_data: str) -> Dict[str, Any]:
         """Validate ONIX against IngramSpark requirements"""
         findings = []
-        
+
         try:
             xml_doc = etree.fromstring(onix_data.encode())
             doc_tree = etree.ElementTree(xml_doc)
-            
+
             # Run validation rules
             for rule in self.validation_rules:
                 rule_findings = self.evaluate_xpath_rule(doc_tree, rule)
                 findings.extend(rule_findings)
-            
+
             # IngramSpark specific checks
             findings.extend(await self._check_ingram_requirements(doc_tree))
-            
+
             return {
                 "retailer": self.retailer_name,
                 "validation_status": "passed" if not any(f["severity"] == "error" for f in findings) else "failed",
@@ -337,7 +337,7 @@ class IngramSparkProfile(RetailerProfile):
                 "total_errors": len([f for f in findings if f["severity"] == "error"]),
                 "total_warnings": len([f for f in findings if f["severity"] == "warning"])
             }
-            
+
         except Exception as e:
             return {
                 "retailer": self.retailer_name,
@@ -345,15 +345,15 @@ class IngramSparkProfile(RetailerProfile):
                 "error": str(e),
                 "findings": []
             }
-    
+
     async def _check_ingram_requirements(self, xml_doc: etree._ElementTree) -> List[Dict]:
         """IngramSpark-specific validation logic"""
         findings = []
-        
+
         # Check for print vs digital format consistency
         product_form = xml_doc.xpath("//ProductForm/text()", namespaces=self.required_namespaces)
         dimensions = xml_doc.xpath("//Measure[MeasureType='01']", namespaces=self.required_namespaces)
-        
+
         if product_form and product_form[0] in ["BC", "BB"] and not dimensions:  # Print formats
             findings.append({
                 "rule_id": "ingram_print_dimensions_required",
@@ -361,23 +361,23 @@ class IngramSparkProfile(RetailerProfile):
                 "message": "Print books require physical dimensions for IngramSpark",
                 "xpath": "//Measure"
             })
-        
+
         return findings
-    
+
     async def submit_onix(self, onix_data: str, credentials: Dict) -> Dict[str, Any]:
         """Submit ONIX to IngramSpark API"""
         try:
             # TODO: Implement IngramSpark API integration
             await asyncio.sleep(1.5)  # Simulate API call
-            
+
             return {
-                "status": "submitted", 
+                "status": "submitted",
                 "confirmation_id": f"ISP-{int(asyncio.get_event_loop().time())}",
                 "submission_time": "2024-01-15T10:30:00Z",
                 "estimated_processing": "2-4 hours",
                 "tracking_url": "https://portal.ingramspark.com/submissions/67890"
             }
-            
+
         except Exception as e:
             return {
                 "status": "failed",
@@ -386,19 +386,19 @@ class IngramSparkProfile(RetailerProfile):
 
 class MultiRetailerValidator:
     """Concurrent validation across multiple retailer profiles"""
-    
+
     def __init__(self):
         self.profiles = {
             "amazon_kdp": AmazonKDPProfile(),
             "ingram_spark": IngramSparkProfile()
             # Add more retailers as needed
         }
-    
+
     async def validate_for_retailers(self, onix_data: str, retailer_names: List[str]) -> Dict[str, Any]:
         """Run validation concurrently for multiple retailers"""
         if "all" in retailer_names:
             retailer_names = list(self.profiles.keys())
-        
+
         # Create concurrent validation tasks
         tasks = []
         for retailer_name in retailer_names:
@@ -406,12 +406,12 @@ class MultiRetailerValidator:
                 profile = self.profiles[retailer_name]
                 task = profile.validate_onix(onix_data)
                 tasks.append((retailer_name, task))
-        
+
         # Execute all validations concurrently
         results = {}
         if tasks:
             task_results = await asyncio.gather(*[task for _, task in tasks], return_exceptions=True)
-            
+
             for (retailer_name, _), result in zip(tasks, task_results):
                 if isinstance(result, Exception):
                     results[retailer_name] = {
@@ -420,7 +420,7 @@ class MultiRetailerValidator:
                     }
                 else:
                     results[retailer_name] = result
-        
+
         # Generate summary
         summary = {
             "total_retailers_checked": len(results),
@@ -428,28 +428,28 @@ class MultiRetailerValidator:
             "failed": len([r for r in results.values() if r.get("validation_status") == "failed"]),
             "overall_status": "passed" if all(r.get("validation_status") == "passed" for r in results.values()) else "failed"
         }
-        
+
         return {
             "summary": summary,
             "retailer_results": results
         }
-    
+
     async def submit_to_retailers(self, onix_data: str, retailer_submissions: Dict[str, Dict]) -> Dict[str, Any]:
         """Submit to multiple retailers with their specific credentials"""
         submission_tasks = []
-        
+
         for retailer_name, submission_config in retailer_submissions.items():
             if retailer_name in self.profiles:
                 profile = self.profiles[retailer_name]
                 credentials = submission_config.get("credentials", {})
                 task = profile.submit_onix(onix_data, credentials)
                 submission_tasks.append((retailer_name, task))
-        
+
         # Execute submissions concurrently
         results = {}
         if submission_tasks:
             task_results = await asyncio.gather(*[task for _, task in submission_tasks], return_exceptions=True)
-            
+
             for (retailer_name, _), result in zip(submission_tasks, task_results):
                 if isinstance(result, Exception):
                     results[retailer_name] = {
@@ -458,7 +458,7 @@ class MultiRetailerValidator:
                     }
                 else:
                     results[retailer_name] = result
-        
+
         return results
 
 # Factory function for getting retailer profiles
