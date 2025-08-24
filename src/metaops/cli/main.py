@@ -228,7 +228,7 @@ def cmd_web(
     app_path = Path(__file__).parent.parent / "web" / "streamlit_app.py"
 
     console.print(f"[cyan]Starting web interface on port {port}...[/]")
-    console.print(f"[yellow]Access at:[/] http://localhost:{port}")
+    console.print(f"[yellow]Access at:[/] http://100.111.114.84:{port}")
 
     try:
         subprocess.run([
@@ -253,7 +253,7 @@ def cmd_dashboard(
     app_path = Path(__file__).parent.parent / "web" / "dashboard.py"
 
     console.print(f"[cyan]Starting analytics dashboard on port {port}...[/]")
-    console.print(f"[yellow]Access at:[/] http://localhost:{port}")
+    console.print(f"[yellow]Access at:[/] http://100.111.114.84:{port}")
     console.print(f"[blue]Features:[/] Batch processing, charts, export reports")
 
     try:

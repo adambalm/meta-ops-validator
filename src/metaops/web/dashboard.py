@@ -291,7 +291,7 @@ def main():
         st.markdown("### 📄 Single File Analysis")
         st.info("For single file validation, please use the main validation interface.")
         if st.button("🔗 Go to Main Validator"):
-            st.markdown("[Click here to access the main validator](http://localhost:8502)")
+            st.markdown("[Click here to access the main validator](http://100.111.114.84:8507)")
 
     elif mode == "Batch Processing":
         st.markdown("### 📁 Batch Processing")

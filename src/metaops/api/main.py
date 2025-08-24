@@ -25,11 +25,21 @@ from metaops.validators.retailer_profiles import calculate_retailer_score, calcu
 from metaops.rules.engine import evaluate as eval_rules
 from metaops.api.state_manager import get_state_manager, startup_state_manager, shutdown_state_manager
 
+# Import database and repository dependencies
+from metaops.database.engine import get_async_session, init_database
+from metaops.repositories import (
+    PublisherRepository,
+    BookRepository,
+    AuthorRepository,
+    ContractRepository
+)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifespan events."""
     # Startup
     await startup_state_manager()
+    await init_database()  # Initialize database tables
     yield
     # Shutdown
     await shutdown_state_manager()
@@ -91,6 +101,106 @@ class StatsResponse(BaseModel):
     failed_validations: int
     average_processing_time: float
     popular_retailers: List[str]
+
+# === New Models for Book-Author-Contract Management ===
+
+class PublisherCreate(BaseModel):
+    """Create publisher request."""
+    name: str = Field(..., min_length=1, max_length=255)
+    imprint: Optional[str] = Field(None, max_length=255)
+    territory_codes: Optional[List[str]] = Field(default_factory=list)
+    validation_profile: Optional[Dict[str, Any]] = Field(default_factory=dict)
+
+class PublisherResponse(BaseModel):
+    """Publisher response model."""
+    id: str
+    name: str
+    imprint: Optional[str]
+    territory_codes: List[str]
+    created_at: datetime
+    book_count: Optional[int] = 0
+    contract_count: Optional[int] = 0
+    compliance_rate: Optional[float] = 0.0
+
+class BookCreate(BaseModel):
+    """Create book request."""
+    title: str = Field(..., min_length=1, max_length=500)
+    isbn: str = Field(..., pattern=r'^\d{13}$')
+    subtitle: Optional[str] = Field(None, max_length=500)
+    publisher_id: str
+    publication_date: Optional[str] = None
+    product_form: str = Field('BA', pattern=r'^[A-Z]{2}$')
+
+class BookResponse(BaseModel):
+    """Book response model."""
+    id: str
+    title: str
+    isbn: str
+    subtitle: Optional[str]
+    publisher_id: str
+    publication_date: Optional[str]
+    product_form: str
+    validation_status: str
+    authors: List[Dict[str, Any]] = []
+    onix_file_path: Optional[str]
+    created_at: datetime
+
+class AuthorCreate(BaseModel):
+    """Create author request."""
+    name: str = Field(..., min_length=1, max_length=255)
+    contributor_type: str = Field('A01', pattern=r'^[A-Z]\d{2}$')
+    biography: Optional[str] = None
+    website_url: Optional[str] = None
+
+class AuthorResponse(BaseModel):
+    """Author response model."""
+    id: str
+    name: str
+    sort_name: str
+    contributor_type: str
+    biography: Optional[str]
+    book_count: int = 0
+
+class AuthorLink(BaseModel):
+    """Link author to book request."""
+    author_id: str
+    sequence_number: int = Field(1, ge=1, le=20)
+    contributor_role: str = Field('A01', pattern=r'^[A-Z]\d{2}$')
+
+class ContractCreate(BaseModel):
+    """Create contract request."""
+    publisher_id: str
+    contract_name: str = Field(..., min_length=1, max_length=255)
+    contract_type: str = Field(..., pattern=r'^(distribution_agreement|retailer_terms|licensing)$')
+    retailer: str = Field(..., max_length=100)
+    effective_date: Optional[str] = None
+    expiration_date: Optional[str] = None
+    territory_restrictions: Optional[List[str]] = []
+    validation_rules: Optional[Dict[str, Any]] = {}
+
+class ContractResponse(BaseModel):
+    """Contract response model."""
+    id: str
+    publisher_id: str
+    contract_name: str
+    contract_type: str
+    retailer: str
+    effective_date: Optional[str]
+    expiration_date: Optional[str]
+    territory_restrictions: List[str]
+    status: str
+    created_at: datetime
+
+class ComplianceResult(BaseModel):
+    """Compliance check result."""
+    book_id: str
+    contract_id: str
+    compliant: bool
+    status: str
+    violations: List[str]
+    warnings: List[str]
+    territory_check_passed: bool
+    rules_check_passed: bool
 
 # Authentication with proper token validation
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
@@ -301,6 +411,514 @@ async def get_api_stats(current_user: dict = Depends(get_current_user)):
         average_processing_time=avg_time,
         popular_retailers=["amazon", "ingram", "apple"]  # Simplified for MVP
     )
+
+# === Book-Author-Contract Management Endpoints ===
+
+@app.get("/api/v1/publishers", response_model=List[PublisherResponse], tags=["Publishers"])
+async def list_publishers(current_user: dict = Depends(get_current_user)):
+    """Get all publishers for selection interface."""
+    session = await get_async_session()
+    async with session:
+        repo = PublisherRepository(session)
+        publishers = await repo.get_all_publishers()
+        
+        return [
+            PublisherResponse(
+                id=pub.id,
+                name=pub.name,
+                imprint=pub.imprint,
+                territory_codes=pub.territory_codes,
+                created_at=pub.created_at,
+                book_count=0,  # Will be calculated if needed
+                contract_count=0,
+                compliance_rate=0.0
+            )
+            for pub in publishers
+        ]
+
+@app.post("/api/v1/publishers", response_model=PublisherResponse, tags=["Publishers"])
+async def create_publisher(
+    publisher_data: PublisherCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new publisher with validation profile."""
+    session = await get_async_session()
+    async with session:
+        repo = PublisherRepository(session)
+        
+        publisher = await repo.create_publisher(
+            name=publisher_data.name,
+            imprint=publisher_data.imprint,
+            territory_codes=publisher_data.territory_codes,
+            validation_profile=publisher_data.validation_profile
+        )
+        await session.commit()
+        
+        return PublisherResponse(
+            id=publisher.id,
+            name=publisher.name,
+            imprint=publisher.imprint,
+            territory_codes=publisher.territory_codes or [],
+            created_at=publisher.created_at,
+            book_count=0,
+            contract_count=0,
+            compliance_rate=0.0
+        )
+
+@app.get("/api/v1/publishers/{publisher_id}", response_model=PublisherResponse, tags=["Publishers"])
+async def get_publisher(
+    publisher_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get publisher details by ID."""
+    session = await get_async_session()
+    async with session:
+        repo = PublisherRepository(session)
+        
+        publisher = await repo.get_by_id(publisher_id)
+        if not publisher:
+            raise HTTPException(status_code=404, detail="Publisher not found")
+        
+        stats = await repo.get_publisher_with_stats(publisher_id)
+        
+        return PublisherResponse(
+            id=publisher.id,
+            name=publisher.name,
+            imprint=publisher.imprint,
+            territory_codes=publisher.territory_codes or [],
+            created_at=publisher.created_at,
+            book_count=stats['book_count'] if stats else 0,
+            contract_count=stats['contract_count'] if stats else 0,
+            compliance_rate=stats['compliance_rate'] if stats else 0.0
+        )
+
+@app.get("/api/v1/publishers/{publisher_id}/dashboard", tags=["Publishers"])
+async def get_publisher_dashboard(
+    publisher_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get publisher dashboard with KPIs and statistics."""
+    session = await get_async_session()
+    async with session:
+        repo = PublisherRepository(session)
+        contract_repo = ContractRepository(session)
+        
+        stats = await repo.get_publisher_with_stats(publisher_id)
+        if not stats:
+            raise HTTPException(status_code=404, detail="Publisher not found")
+        
+        # Get compliance summary
+        compliance_summary = await contract_repo.get_publisher_compliance_summary(publisher_id)
+        
+        return {
+            "publisher": {
+                "id": stats['publisher'].id,
+                "name": stats['publisher'].name,
+                "imprint": stats['publisher'].imprint
+            },
+            "metrics": {
+                "book_count": stats['book_count'],
+                "contract_count": stats['contract_count'],
+                "validation_stats": stats['validation_stats'],
+                "compliance_rate": stats['compliance_rate']
+            },
+            "compliance": compliance_summary,
+            "recent_books": await repo.get_publisher_books(publisher_id, limit=5)
+        }
+
+@app.get("/api/v1/books", response_model=List[BookResponse], tags=["Books"])
+async def list_books(
+    publisher_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get books with optional publisher filtering."""
+    session = await get_async_session()
+    async with session:
+        repo = BookRepository(session)
+        books = await repo.search_books(publisher_id=publisher_id)
+        
+        book_responses = []
+        for book in books:
+            # Get book details with authors
+            details = await repo.get_book_with_details(book.id)
+            
+            authors = []
+            if details and details['authors']:
+                authors = [
+                    {"id": author.id, "name": author.name}
+                    for author in details['authors']
+                ]
+            
+            book_responses.append(BookResponse(
+                id=book.id,
+                title=book.title,
+                isbn=book.isbn,
+                subtitle=book.subtitle,
+                publisher_id=book.publisher_id,
+                publication_date=book.publication_date.isoformat() if book.publication_date else None,
+                product_form=book.product_form,
+                validation_status=book.validation_status,
+                authors=authors,
+                onix_file_path=book.onix_file_path,
+                created_at=book.created_at
+            ))
+        
+        return book_responses
+
+@app.post("/api/v1/books", response_model=BookResponse, tags=["Books"])
+async def create_book(
+    book_data: BookCreate,
+    trigger_validation: bool = True,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new book with optional ONIX file upload."""
+    session = await get_async_session()
+    async with session:
+        repo = BookRepository(session)
+        
+        # For now, no ONIX file upload
+        onix_file_path = None
+        
+        # Parse publication date if provided
+        from datetime import date
+        pub_date = None
+        if book_data.publication_date:
+            try:
+                pub_date = date.fromisoformat(book_data.publication_date)
+            except:
+                pass
+        
+        # Create book
+        book = await repo.create_book_with_validation(
+            title=book_data.title,
+            isbn=book_data.isbn,
+            subtitle=book_data.subtitle,
+            publisher_id=book_data.publisher_id,
+            publication_date=pub_date,
+            product_form=book_data.product_form,
+            onix_file_path=onix_file_path,
+            trigger_validation=trigger_validation
+        )
+        await session.commit()
+        
+        return BookResponse(
+            id=book.id,
+            title=book.title,
+            isbn=book.isbn,
+            subtitle=book.subtitle,
+            publisher_id=book.publisher_id,
+            publication_date=book.publication_date.isoformat() if book.publication_date else None,
+            product_form=book.product_form,
+            validation_status=book.validation_status,
+            authors=[],
+            onix_file_path=book.onix_file_path,
+            created_at=book.created_at
+        )
+
+@app.get("/api/v1/books/{book_id}", response_model=BookResponse, tags=["Books"])
+async def get_book(
+    book_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get book details including authors and validation status."""
+    session = await get_async_session()
+    async with session:
+        repo = BookRepository(session)
+        
+        book_details = await repo.get_book_with_details(book_id)
+        if not book_details:
+            raise HTTPException(status_code=404, detail="Book not found")
+        
+        book = book_details['book']
+        authors_data = []
+        for author in book_details['authors']:
+            authors_data.append({
+                "id": author.id,
+                "name": author.name,
+                "contributor_type": author.contributor_type
+            })
+        
+        return BookResponse(
+            id=book.id,
+            title=book.title,
+            isbn=book.isbn,
+            subtitle=book.subtitle,
+            publisher_id=book.publisher_id,
+            publication_date=book.publication_date.isoformat() if book.publication_date else None,
+            product_form=book.product_form,
+            validation_status=book.validation_status,
+            authors=authors_data,
+            onix_file_path=book.onix_file_path,
+            created_at=book.created_at
+        )
+
+@app.put("/api/v1/books/{book_id}/authors", tags=["Books"])
+async def link_authors_to_book(
+    book_id: str,
+    authors: List[AuthorLink],
+    current_user: dict = Depends(get_current_user)
+):
+    """Link authors to a book with contributor roles."""
+    session = await get_async_session()
+    async with session:
+        repo = BookRepository(session)
+        
+        # Verify book exists
+        book = await repo.get_by_id(book_id)
+        if not book:
+            raise HTTPException(status_code=404, detail="Book not found")
+        
+        # Link each author
+        links = []
+        for author_link in authors:
+            link = await repo.link_author_to_book(
+                book_id=book_id,
+                author_id=author_link.author_id,
+                sequence_number=author_link.sequence_number,
+                contributor_role=author_link.contributor_role
+            )
+            links.append({
+                "author_id": link.author_id,
+                "sequence_number": link.sequence_number,
+                "contributor_role": link.contributor_role
+            })
+        
+        await session.commit()
+        
+        return {"book_id": book_id, "authors": links}
+
+@app.post("/api/v1/books/{book_id}/validate", tags=["Books"])
+async def validate_book(
+    book_id: str,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user)
+):
+    """Trigger validation for a book's ONIX file."""
+    session = await get_async_session()
+    async with session:
+        repo = BookRepository(session)
+        
+        book = await repo.get_by_id(book_id)
+        if not book:
+            raise HTTPException(status_code=404, detail="Book not found")
+        
+        if not book.onix_file_path:
+            raise HTTPException(status_code=400, detail="Book has no ONIX file to validate")
+        
+        # Read ONIX file
+        onix_path = Path(book.onix_file_path)
+        if not onix_path.exists():
+            raise HTTPException(status_code=404, detail="ONIX file not found")
+        
+        file_content = onix_path.read_bytes()
+        
+        # Create validation request
+        validation_id = str(uuid4())
+        validation_state = state_manager.create_validation(
+            validation_id=validation_id,
+            filename=onix_path.name,
+            file_size=len(file_content),
+            user_id=current_user["user_id"],
+            tenant=current_user["tenant"]
+        )
+        
+        # Queue validation
+        validation_request = ValidationRequest()
+        background_tasks.add_task(
+            process_validation,
+            validation_id,
+            file_content,
+            onix_path.name,
+            validation_request
+        )
+        
+        # Update book validation status
+        await repo.update_validation_status(book_id, "processing")
+        await session.commit()
+        
+        return {
+            "book_id": book_id,
+            "validation_id": validation_id,
+            "status": "validation_queued"
+        }
+
+@app.get("/api/v1/authors/search", response_model=List[AuthorResponse], tags=["Authors"])
+async def search_authors(
+    q: str,
+    publisher_id: Optional[str] = None,
+    limit: int = 10,
+    current_user: dict = Depends(get_current_user)
+):
+    """Search for authors by name with intelligent suggestions."""
+    session = await get_async_session()
+    async with session:
+        repo = AuthorRepository(session)
+        
+        results = await repo.search_authors(
+            search_term=q,
+            publisher_context=publisher_id,
+            limit=limit
+        )
+        
+        authors = []
+        for result in results:
+            author = result['author']
+            authors.append(AuthorResponse(
+                id=author.id,
+                name=author.name,
+                sort_name=author.sort_name,
+                contributor_type=author.contributor_type,
+                biography=author.biography,
+                book_count=result['book_count']
+            ))
+        
+        return authors
+
+@app.post("/api/v1/authors", response_model=AuthorResponse, tags=["Authors"])
+async def create_author(
+    author_data: AuthorCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new author."""
+    session = await get_async_session()
+    async with session:
+        repo = AuthorRepository(session)
+        
+        author = await repo.create_author(
+            name=author_data.name,
+            contributor_type=author_data.contributor_type,
+            biography=author_data.biography,
+            website_url=author_data.website_url
+        )
+        await session.commit()
+        
+        return AuthorResponse(
+            id=author.id,
+            name=author.name,
+            sort_name=author.sort_name,
+            contributor_type=author.contributor_type,
+            biography=author.biography,
+            book_count=0
+        )
+
+@app.get("/api/v1/contracts", response_model=List[ContractResponse], tags=["Contracts"])
+async def list_contracts(
+    publisher_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get contracts with optional publisher filtering."""
+    session = await get_async_session()
+    async with session:
+        repo = ContractRepository(session)
+        if publisher_id:
+            contracts = await repo.get_active_contracts(publisher_id)
+        else:
+            contracts = await repo.get_all_contracts()
+        
+        return [
+            ContractResponse(
+                id=contract.id,
+                publisher_id=contract.publisher_id,
+                contract_name=contract.contract_name,
+                contract_type=contract.contract_type,
+                retailer=contract.retailer,
+                effective_date=contract.effective_date.isoformat(),
+                expiration_date=contract.expiration_date.isoformat() if contract.expiration_date else None,
+                territory_restrictions=contract.territory_restrictions,
+                status=contract.status,
+                created_at=contract.created_at
+            )
+            for contract in contracts
+        ]
+
+@app.post("/api/v1/contracts", response_model=ContractResponse, tags=["Contracts"])
+async def create_contract(
+    contract_data: ContractCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new contract with validation rules."""
+    session = await get_async_session()
+    async with session:
+        repo = ContractRepository(session)
+        
+        # For now, no contract file upload
+        document_path = None
+        
+        # Parse dates
+        from datetime import date
+        eff_date = None
+        exp_date = None
+        if contract_data.effective_date:
+            try:
+                eff_date = date.fromisoformat(contract_data.effective_date)
+            except:
+                pass
+        if contract_data.expiration_date:
+            try:
+                exp_date = date.fromisoformat(contract_data.expiration_date)
+            except:
+                pass
+        
+        contract = await repo.create_contract(
+            publisher_id=contract_data.publisher_id,
+            contract_name=contract_data.contract_name,
+            contract_type=contract_data.contract_type,
+            retailer=contract_data.retailer,
+            effective_date=eff_date,
+            expiration_date=exp_date,
+            territory_restrictions=contract_data.territory_restrictions,
+            validation_rules=contract_data.validation_rules,
+            document_path=document_path
+        )
+        await session.commit()
+        
+        return ContractResponse(
+            id=contract.id,
+            publisher_id=contract.publisher_id,
+            contract_name=contract.contract_name,
+            contract_type=contract.contract_type,
+            retailer=contract.retailer,
+            effective_date=contract.effective_date.isoformat() if contract.effective_date else None,
+            expiration_date=contract.expiration_date.isoformat() if contract.expiration_date else None,
+            territory_restrictions=contract.territory_restrictions or [],
+            status=contract.status,
+            created_at=contract.created_at
+        )
+
+@app.post("/api/v1/books/{book_id}/check-compliance", response_model=ComplianceResult, tags=["Contracts"])
+async def check_book_compliance(
+    book_id: str,
+    contract_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Check if a book complies with a specific contract."""
+    session = await get_async_session()
+    async with session:
+        repo = ContractRepository(session)
+        
+        result = await repo.check_book_compliance(book_id, contract_id)
+        
+        # Create compliance record
+        compliance_record = await repo.create_compliance_result(
+            book_id=book_id,
+            contract_id=contract_id,
+            compliance_status=result['status'],
+            territory_check_passed=result.get('territory_check_passed', True),
+            retailer_requirements_met=result.get('rules_check_passed', True),
+            violations=[{"message": v} for v in result.get('violations', [])]
+        )
+        await session.commit()
+        
+        return ComplianceResult(
+            book_id=book_id,
+            contract_id=contract_id,
+            compliant=result['compliant'],
+            status=result['status'],
+            violations=result.get('violations', []),
+            warnings=result.get('warnings', []),
+            territory_check_passed=result.get('territory_check_passed', True),
+            rules_check_passed=result.get('rules_check_passed', True)
+        )
 
 async def process_validation(validation_id: str, file_content: bytes, filename: str, request: ValidationRequest):
     """Background task to process validation."""
