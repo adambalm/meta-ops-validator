@@ -5,6 +5,7 @@ FastAPI implementation of validation endpoints per MVP_API_SPEC.md
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -24,23 +25,23 @@ from metaops.validators.retailer_profiles import calculate_retailer_score, calcu
 from metaops.rules.engine import evaluate as eval_rules
 from metaops.api.state_manager import get_state_manager, startup_state_manager, shutdown_state_manager
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifespan events."""
+    # Startup
+    await startup_state_manager()
+    yield
+    # Shutdown
+    await shutdown_state_manager()
+
 app = FastAPI(
     title="MetaOps Validator API",
     description="Pre-feed ONIX validation and metadata completeness scoring",
     version="1.0.0",
     docs_url="/api/docs",
-    redoc_url="/api/redoc"
+    redoc_url="/api/redoc",
+    lifespan=lifespan
 )
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize application state."""
-    await startup_state_manager()
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup application state."""
-    await shutdown_state_manager()
 
 # CORS middleware for web interface
 app.add_middleware(

@@ -4,7 +4,7 @@ from metaops.api.state_manager import ValidationStateManager, ValidationState
 from metaops.api.main import get_current_user
 from fastapi.security import HTTPAuthorizationCredentials
 from fastapi import HTTPException
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def test_validation_state_manager():
@@ -95,7 +95,7 @@ def test_validation_state_ttl():
     state = manager.create_validation("ttl-test", "test.xml", 1024, "user1")
 
     # Manually set TTL to past time for testing
-    state.ttl_expires_at = datetime.utcnow().replace(year=2020)
+    state.ttl_expires_at = datetime.now(timezone.utc).replace(year=2020)
     manager._states["ttl-test"] = state
 
     # Trigger cleanup

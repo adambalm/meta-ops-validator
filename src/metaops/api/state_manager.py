@@ -5,7 +5,7 @@ Thread-safe storage for validation results with TTL cleanup.
 
 import asyncio
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Optional, Any
 from dataclasses import dataclass, field
 import weakref
@@ -25,7 +25,7 @@ class ValidationState:
     user_id: str = ""
     tenant: str = "default"
     pipeline_summary: Optional[Dict[str, Any]] = None
-    ttl_expires_at: datetime = field(default_factory=lambda: datetime.utcnow() + timedelta(hours=24))
+    ttl_expires_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc) + timedelta(hours=24))
 
 
 class ValidationStateManager:
@@ -67,7 +67,7 @@ class ValidationStateManager:
 
     def _cleanup_expired(self):
         """Remove expired validation states."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         with self._lock:
             expired_ids = [
                 validation_id for validation_id, state in self._states.items()
@@ -84,7 +84,7 @@ class ValidationStateManager:
             status="pending",
             filename=filename,
             file_size=file_size,
-            submitted_at=datetime.utcnow(),
+            submitted_at=datetime.now(timezone.utc),
             user_id=user_id,
             tenant=tenant
         )
@@ -105,7 +105,7 @@ class ValidationStateManager:
             if validation_id in self._states:
                 self._states[validation_id].status = status
                 if status in ["completed", "failed"]:
-                    self._states[validation_id].completed_at = datetime.utcnow()
+                    self._states[validation_id].completed_at = datetime.now(timezone.utc)
                 return True
             return False
 

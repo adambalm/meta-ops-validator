@@ -121,7 +121,8 @@ def validate_schematron(onix_path: Path, sch_path: Optional[Path] = None) -> Lis
                 "type": "schematron",
                 "message": f"Schematron validation passed using {sch_path.name}",
                 "path": onix_path.name,
-                "namespace": namespace_uri
+                "namespace": namespace_uri,
+                "rules_used": sch_path.name
             })
 
     except etree.XMLSyntaxError as e:
