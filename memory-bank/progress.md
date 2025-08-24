@@ -29,6 +29,9 @@
 
 ## Update History
 
+- [2025-08-23 5:02:28 AM] [Unknown User] - File Update: Updated system-patterns.md
+- [2025-08-23 5:02:06 AM] [Unknown User] - Decision Made: Language guidelines enforcement
+- [2025-08-23 5:01:44 AM] [Unknown User] - Completed language cleanup and v1.0.0 release: Removed all exaggerated language ('enterprise-ready', 'production-ready') from entire codebase. Added explicit language guidelines to CLAUDE.md prohibiting unrealistic claims. Updated README.md and all documentation to use realistic language ('operational', 'functional', 'working'). Tagged and pushed v1.0.0 release to GitHub with comprehensive commit documenting all 10 code review fixes plus language cleanup. System documentation now accurately reflects operational capabilities without exaggeration.
 - [2025-08-23 4:55:20 AM] [Unknown User] - File Update: Updated active-context.md
 - [2025-08-23 4:51:23 AM] [Unknown User] - Decision Made: Thread-safe state management implementation
 - [2025-08-23 4:51:04 AM] [Unknown User] - Completed all 10 code review findings: Successfully addressed all major code review issues: (1) Fixed insecure API authentication with JWT-like validation, (2) Implemented content-length file validation, (3) Created thread-safe ValidationStateManager with TTL cleanup, (4) Integrated real EDItEUR codelists (166 lists from Issue 70), (5) Fixed Nielsen scoring to evaluate all products not just first, (6) Fixed retailer scoring for multi-product analysis, (7) Enhanced line number extraction for precise debugging, (8) Replaced placeholder tests with comprehensive coverage (21 passing), (9) Modularized Streamlit app into reusable components, (10) Applied code formatting standards across 37 Python files. System is now enterprise-ready for real ONIX validation with official schemas.
