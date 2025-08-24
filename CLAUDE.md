@@ -84,4 +84,4 @@ MCP Servers: memory-bank, github, refs, playwright
 Web Services: Streamlit apps on ports 8507, 8508, 8090
 UI Testing: Playwright MCP for automated usability evaluation
 Test Files: test_onix_files/ (15 generated samples)
-Detailed context: TOOLTIPS_REFERENCE.md, UI_SPECIFICATION.md
+Detailed context: specs/ui-ux/tooltips-reference.md, specs/ui-ux/ui-specification.md

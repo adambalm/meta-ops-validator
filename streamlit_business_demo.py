@@ -100,7 +100,7 @@ def load_sample_files():
 # Business metrics calculation
 def calculate_business_impact(total_findings):
     """Calculate business impact metrics"""
-    # Based on CLAUDE_BUSINESS.md assumptions
+    # Based on context/CLAUDE_BUSINESS.md assumptions
     time_to_correct_hours = 4
     hourly_cost = 75
     monthly_incident_rate = 2.1

@@ -150,10 +150,10 @@ python scripts/generate_test_onix.py
 
 ## 📖 Documentation
 
-- **`TOOLTIPS_REFERENCE.md`** - Complete UI help text catalog
-- **`UI_SPECIFICATION.md`** - Interface design and UX patterns
-- **`TECHNICAL_SPECIFICATION.md`** - Architecture and integration details
-- **`MVP_API_SPEC.md`** - RESTful API specification
+- **`specs/ui-ux/tooltips-reference.md`** - Complete UI help text catalog
+- **`specs/ui-ux/ui-specification.md`** - Interface design and UX patterns
+- **`specs/technical/technical-specification.md`** - Architecture and integration details
+- **`specs/technical/api-specifications.md`** - RESTful API specification
 - **`memory-bank/`** - Development context and patterns
 
 ## 🔧 Development
