@@ -67,6 +67,24 @@ CRITICAL: Maintain strict process and resource hygiene.
 3. Start new process with explicit environment variables
 4. Track the process ID or use KillBash tool for cleanup
 
+### Validation Requirements (INVARIANT)
+NEVER claim completion without Playwright MCP validation.
+
+**MANDATORY before claiming "working", "operational", "demo-ready", etc.:**
+1. Use Task tool with publishing-ux-designer agent to test UI workflows
+2. Use Playwright MCP to verify actual user experience
+3. Test all major user paths (create book, generate ONIX, view dashboard)
+4. Validate that data shows in UI, not just API endpoints
+
+**Auto-enforcement pattern:**
+- If claiming feature works → MUST show Playwright test results
+- If claiming system ready → MUST show complete UI validation  
+- If committing as "complete" → MUST include Playwright evidence
+- NO EXCEPTIONS - API tests alone are insufficient
+
+**Violation response:**
+"I cannot claim this works without Playwright MCP validation. Let me test the actual user experience first."
+
 ### Web Services (CURRENT)
 ONIX validation interfaces:
 - Main Validator: http://100.111.114.84:8507 (streamlit_app.py) - Single file validation with tooltips
