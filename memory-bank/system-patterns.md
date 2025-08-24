@@ -50,3 +50,43 @@ ALWAYS use realistic language:
 - "functional" instead of "enterprise-ready"  
 - "working" instead of "ready for production"
 - "complete" instead of "production-grade"
+
+## File Organization Pattern (NEW)
+Logical directory structure for maintainability:
+```
+/specs/                     # All specifications
+├── architecture/           # Technical architecture docs
+├── business/              # Business requirements
+├── technical/             # Technical and API specs
+└── ui-ux/                # UI design and help content
+
+/docs/                     # User and developer documentation  
+├── user-guides/           # End-user documentation
+├── governance/            # Project governance
+└── [other doc categories]
+
+/context/                  # Claude context files
+├── CLAUDE_BUSINESS.md     # Business context
+├── CLAUDE_TECHNICAL.md    # Technical context  
+└── [other context files]
+```
+
+Use git mv for all file moves to preserve history.
+Update all file references after reorganization.
+
+## Test Quality Pattern (NEW)
+Comprehensive validation requires all tests to pass:
+- Fix ambiguous Playwright selectors (use specific elements vs text)
+- Match test expectations to actual UI behavior
+- Use `[data-testid="stApp"]` vs `main` for Streamlit apps
+- Fix real bugs discovered during testing (don't ignore failures)
+- UI tests validate actual usability, not just technical function
+
+## Bug Fix Priority Pattern (NEW)
+Always fix discovered bugs during refactoring:
+1. **Functional bugs** - Missing keys, incorrect logic, API issues
+2. **Code quality** - Deprecation warnings, async patterns  
+3. **Test reliability** - Selector precision, timeout handling
+4. **User experience** - UI navigation, tooltip accessibility
+
+Better to delay feature work to fix quality issues.
