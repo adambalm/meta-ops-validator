@@ -33,6 +33,7 @@ from metaops.repositories import (
     AuthorRepository,
     ContractRepository
 )
+from metaops.services.onix_generator import ONIXGenerator
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -919,6 +920,118 @@ async def check_book_compliance(
             territory_check_passed=result.get('territory_check_passed', True),
             rules_check_passed=result.get('rules_check_passed', True)
         )
+
+# === ONIX Generation Endpoints ===
+
+@app.get("/api/v1/books/{book_id}/onix", tags=["ONIX"])
+async def generate_onix_for_book(
+    book_id: str,
+    contract_id: Optional[str] = None,
+    target_territory: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate ONIX 3.0 XML for a book with contract-based filtering."""
+    session = await get_async_session()
+    async with session:
+        book_repo = BookRepository(session)
+        contract_repo = ContractRepository(session)
+        
+        # Get book with full details
+        book_details = await book_repo.get_book_with_details(book_id)
+        if not book_details:
+            raise HTTPException(status_code=404, detail="Book not found")
+        
+        book = book_details['book']
+        publisher = book_details['publisher'] 
+        authors = book_details['authors']
+        
+        # Convert to dict format for ONIX generator
+        book_data = {
+            'id': book.id,
+            'title': book.title,
+            'isbn': book.isbn,
+            'subtitle': book.subtitle,
+            'publication_date': book.publication_date.isoformat() if book.publication_date else None,
+            'product_form': book.product_form
+        }
+        
+        publisher_data = {
+            'name': publisher.name,
+            'imprint': publisher.imprint,
+            'territory_codes': publisher.territory_codes or ['US']
+        }
+        
+        authors_data = [
+            {
+                'name': author.name,
+                'contributor_type': author.contributor_type,
+                'biography': author.biography
+            }
+            for author in authors
+        ]
+        
+        # Get contracts if specified
+        contracts = None
+        if contract_id:
+            contract = await contract_repo.get_by_id(contract_id)
+            if contract:
+                contracts = [{
+                    'id': contract.id,
+                    'territory_restrictions': contract.territory_restrictions or [],
+                    'validation_rules': contract.validation_rules or {}
+                }]
+        
+        # Generate ONIX
+        generator = ONIXGenerator()
+        onix_xml = generator.generate_onix_for_book(
+            book_data=book_data,
+            publisher_data=publisher_data,
+            authors=authors_data,
+            contracts=contracts,
+            target_territory=target_territory
+        )
+        
+        return {
+            "book_id": book_id,
+            "onix_xml": onix_xml,
+            "contract_id": contract_id,
+            "target_territory": target_territory,
+            "generated_at": datetime.utcnow().isoformat()
+        }
+
+@app.get("/api/v1/books/{book_id}/onix-preview", tags=["ONIX"])
+async def get_onix_preview(
+    book_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get truncated ONIX preview for UI display."""
+    session = await get_async_session()
+    async with session:
+        book_repo = BookRepository(session)
+        
+        book_details = await book_repo.get_book_with_details(book_id)
+        if not book_details:
+            raise HTTPException(status_code=404, detail="Book not found")
+        
+        book = book_details['book']
+        
+        # Convert to simple format for preview
+        book_data = {
+            'id': book.id,
+            'title': book.title,
+            'isbn': book.isbn,
+            'subtitle': book.subtitle,
+            'publication_date': book.publication_date.isoformat() if book.publication_date else None
+        }
+        
+        generator = ONIXGenerator()
+        preview_xml = generator.generate_onix_preview(book_data)
+        
+        return {
+            "book_id": book_id,
+            "preview_xml": preview_xml,
+            "is_preview": True
+        }
 
 async def process_validation(validation_id: str, file_content: bytes, filename: str, request: ValidationRequest):
     """Background task to process validation."""

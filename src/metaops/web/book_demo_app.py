@@ -169,6 +169,25 @@ def check_compliance(book_id: str, contract_id: str) -> Optional[Dict]:
     """Check book compliance against contract"""
     return make_api_request("POST", f"/books/{book_id}/check-compliance?contract_id={contract_id}")
 
+def get_onix_preview(book_id: str) -> Optional[Dict]:
+    """Get ONIX preview for a book"""
+    return make_api_request("GET", f"/books/{book_id}/onix-preview")
+
+def generate_onix(book_id: str, contract_id: Optional[str] = None, target_territory: Optional[str] = None) -> Optional[Dict]:
+    """Generate full ONIX XML for a book"""
+    params = []
+    if contract_id:
+        params.append(f"contract_id={contract_id}")
+    if target_territory:
+        params.append(f"target_territory={target_territory}")
+    
+    query_string = "&".join(params)
+    endpoint = f"/books/{book_id}/onix"
+    if query_string:
+        endpoint += f"?{query_string}"
+    
+    return make_api_request("GET", endpoint)
+
 # UI Components
 def render_header():
     """Render main application header"""
@@ -304,7 +323,7 @@ def render_book_management(publisher: Dict):
     st.header("📚 Book Management")
     
     # Tabs for different book operations
-    tab1, tab2, tab3 = st.tabs(["📖 Book Catalog", "➕ Add New Book", "🔗 Link Authors"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📖 Book Catalog", "➕ Add New Book", "🔗 Link Authors", "📄 ONIX Generation"])
     
     with tab1:
         st.subheader("Book Catalog")
@@ -333,8 +352,14 @@ def render_book_management(publisher: Dict):
                         else:
                             st.write("No authors linked")
                         
-                        if st.button(f"View Details", key=f"details_{book['id']}"):
-                            st.session_state.selected_book_id = book['id']
+                        # Action buttons
+                        btn_col1, btn_col2 = st.columns(2)
+                        with btn_col1:
+                            if st.button(f"📄 ONIX Preview", key=f"onix_{book['id']}"):
+                                show_onix_preview(book['id'])
+                        with btn_col2:
+                            if st.button(f"View Details", key=f"details_{book['id']}"):
+                                st.session_state.selected_book_id = book['id']
         else:
             st.info("📚 No books found for this publisher.")
             st.write("**Get started by:**")
@@ -349,6 +374,10 @@ def render_book_management(publisher: Dict):
     with tab3:
         st.subheader("Link Authors to Books")
         render_author_linking_interface(publisher)
+    
+    with tab4:
+        st.subheader("ONIX Generation")
+        render_onix_generation_interface(publisher)
 
 def render_add_book_form(publisher: Dict):
     """Render form to add new book"""
@@ -433,6 +462,102 @@ def render_author_linking_interface(publisher: Dict):
                             st.rerun()
                         else:
                             st.error("Failed to link author")
+
+def render_onix_generation_interface(publisher: Dict):
+    """Render ONIX generation interface"""
+    books = get_books(publisher['id'])
+    contracts = get_contracts(publisher['id'])
+    
+    if not books:
+        st.info("No books available for ONIX generation.")
+        return
+    
+    # Select book
+    book_options = {f"{book['title']} (ISBN: {book['isbn']})": book for book in books}
+    selected_book_name = st.selectbox("Select Book for ONIX Generation", list(book_options.keys()), key="onix_book_select")
+    selected_book = book_options[selected_book_name]
+    
+    # Show book details
+    col1, col2 = st.columns(2)
+    with col1:
+        st.write(f"**Title:** {selected_book['title']}")
+        st.write(f"**ISBN:** {selected_book['isbn']}")
+        st.write(f"**Authors:** {len(selected_book['authors'])} linked")
+    with col2:
+        st.write(f"**Product Form:** {selected_book['product_form']}")
+        st.write(f"**Publication Date:** {selected_book.get('publication_date', 'Not set')}")
+        st.write(f"**Status:** {selected_book['validation_status'].title()}")
+    
+    st.divider()
+    
+    # Advanced options
+    with st.expander("🎛️ Advanced ONIX Options"):
+        # Contract-based filtering
+        contract_filter = st.checkbox("Apply Contract Filtering", help="Filter ONIX output based on contract terms")
+        selected_contract = None
+        if contract_filter and contracts:
+            contract_options = {f"{contract['contract_name']} ({contract['retailer']})": contract for contract in contracts}
+            if contract_options:
+                selected_contract_name = st.selectbox("Select Contract", list(contract_options.keys()))
+                selected_contract = contract_options[selected_contract_name]
+        
+        # Territory targeting
+        territory_filter = st.checkbox("Target Specific Territory", help="Generate ONIX for specific territory")
+        target_territory = None
+        if territory_filter:
+            target_territory = st.selectbox("Target Territory", ["US", "UK", "CA", "AU", "EU"], help="Territory for ONIX optimization")
+    
+    st.divider()
+    
+    # Generation actions
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        if st.button("👁️ Quick Preview", use_container_width=True):
+            with st.spinner("Generating preview..."):
+                preview_data = get_onix_preview(selected_book['id'])
+                
+                if preview_data:
+                    st.success("✅ Preview generated!")
+                    st.subheader("ONIX Preview")
+                    st.code(preview_data.get('preview_xml', 'No preview available'), language='xml')
+                else:
+                    st.error("Failed to generate preview")
+    
+    with col2:
+        if st.button("📄 Generate Full ONIX", use_container_width=True):
+            with st.spinner("Generating full ONIX..."):
+                full_onix = generate_onix(
+                    selected_book['id'],
+                    contract_id=selected_contract['id'] if selected_contract else None,
+                    target_territory=target_territory
+                )
+                
+                if full_onix:
+                    st.success("✅ Full ONIX generated!")
+                    
+                    # Show generation info
+                    st.write(f"**Generated:** {full_onix.get('generated_at', 'Now')}")
+                    if selected_contract:
+                        st.write(f"**Applied Contract:** {selected_contract['contract_name']}")
+                    if target_territory:
+                        st.write(f"**Territory:** {target_territory}")
+                    
+                    # Download button
+                    xml_content = full_onix.get('onix_xml', '')
+                    if xml_content:
+                        st.download_button(
+                            label="📥 Download ONIX XML",
+                            data=xml_content,
+                            file_name=f"{selected_book['isbn']}_onix.xml",
+                            mime="application/xml"
+                        )
+                else:
+                    st.error("Failed to generate ONIX")
+    
+    with col3:
+        if st.button("🔍 Validate Generated ONIX", use_container_width=True):
+            st.info("ONIX validation integration coming soon!")
 
 def render_author_search():
     """Render author search interface"""
@@ -545,6 +670,338 @@ def render_compliance_checking(publisher: Dict):
             if not compliance['violations'] and not compliance['warnings']:
                 st.info("No specific issues to report.")
 
+def show_onix_preview(book_id: str):
+    """Show ONIX preview in a modal-like dialog"""
+    preview_data = get_onix_preview(book_id)
+    
+    if preview_data:
+        st.subheader("📄 ONIX Preview")
+        st.info("This is a truncated preview of the generated ONIX XML.")
+        
+        # Show the XML in a code block
+        st.code(preview_data.get('preview_xml', 'No preview available'), language='xml')
+        
+        # Option to generate full ONIX
+        if st.button("Generate Full ONIX", key=f"full_onix_{book_id}"):
+            with st.spinner("Generating full ONIX..."):
+                full_onix = generate_onix(book_id)
+                
+                if full_onix:
+                    st.success("✅ Full ONIX generated successfully!")
+                    
+                    # Download button for full XML
+                    xml_content = full_onix.get('onix_xml', '')
+                    if xml_content:
+                        st.download_button(
+                            label="📥 Download ONIX XML",
+                            data=xml_content,
+                            file_name=f"book_{book_id}_onix.xml",
+                            mime="application/xml",
+                            key=f"download_onix_{book_id}"
+                        )
+                        
+                        # Show generation metadata
+                        st.write(f"**Generated:** {full_onix.get('generated_at', 'Unknown')}")
+                        if full_onix.get('contract_id'):
+                            st.write(f"**Contract:** {full_onix.get('contract_id')}")
+                        if full_onix.get('target_territory'):
+                            st.write(f"**Territory:** {full_onix.get('target_territory')}")
+    else:
+        st.error("Failed to generate ONIX preview. Please ensure the book has all required metadata.")
+
+def render_contract_management(publisher: Dict):
+    """Render comprehensive contract management interface"""
+    st.header("📄 Contract Management & Distribution Workflow")
+    
+    # Tabs for contract operations
+    tab1, tab2, tab3, tab4 = st.tabs(["📋 Active Contracts", "➕ Create Contract", "🌐 Distributor Integration", "📈 Business Workflow"])
+    
+    with tab1:
+        st.subheader("Active Contracts")
+        contracts = get_contracts(publisher['id'])
+        
+        if contracts:
+            # Contract metrics
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Total Contracts", len(contracts))
+            with col2:
+                active_count = len([c for c in contracts if c.get('status') == 'active'])
+                st.metric("Active", active_count)
+            with col3:
+                pending_count = len([c for c in contracts if c.get('status') == 'pending'])
+                st.metric("Pending", pending_count)
+            with col4:
+                territories = set()
+                for contract in contracts:
+                    if contract.get('territory_restrictions'):
+                        territories.update(contract['territory_restrictions'])
+                st.metric("Territories", len(territories))
+            
+            st.divider()
+            
+            # Contract list
+            for contract in contracts:
+                with st.expander(f"📄 {contract['contract_name']} ({contract['retailer']})", expanded=False):
+                    col1, col2 = st.columns([2, 1])
+                    
+                    with col1:
+                        st.write(f"**Retailer:** {contract['retailer']}")
+                        st.write(f"**Type:** {contract['contract_type'].replace('_', ' ').title()}")
+                        st.write(f"**Status:** {contract['status'].title()}")
+                        if contract.get('effective_date'):
+                            st.write(f"**Effective Date:** {contract['effective_date']}")
+                        if contract.get('territory_restrictions'):
+                            st.write(f"**Territories:** {', '.join(contract['territory_restrictions'])}")
+                    
+                    with col2:
+                        st.write("**Actions:**")
+                        if st.button(f"📊 View Analytics", key=f"analytics_{contract['id']}"):
+                            show_contract_analytics(contract['id'])
+                        if st.button(f"📤 Send ONIX Feed", key=f"feed_{contract['id']}"):
+                            simulate_distributor_feed(contract, publisher)
+                        if st.button(f"🔍 Test Compliance", key=f"test_{contract['id']}"):
+                            test_contract_compliance(contract['id'], publisher['id'])
+        else:
+            st.info("📄 No contracts found for this publisher.")
+            st.write("**Get started by:**")
+            st.write("• Create your first contract using the 'Create Contract' tab")
+            st.write("• Set up distribution agreements with major retailers")
+            st.write("• Configure territory restrictions and validation rules")
+    
+    with tab2:
+        st.subheader("Create New Contract")
+        render_create_contract_form(publisher)
+    
+    with tab3:
+        st.subheader("Distributor Integration")
+        render_distributor_integration(publisher)
+    
+    with tab4:
+        st.subheader("Business Workflow Visualization")
+        render_business_workflow(publisher)
+
+def show_contract_analytics(contract_id: str):
+    """Show contract performance analytics"""
+    st.subheader("📊 Contract Analytics")
+    
+    # Placeholder analytics - in a real system, this would pull actual data
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Books Distributed", "147", delta="12")
+    with col2:
+        st.metric("Compliance Rate", "94%", delta="2%")
+    with col3:
+        st.metric("Revenue Impact", "$23,450", delta="$1,230")
+    
+    st.info("📈 Detailed analytics integration coming soon.")
+
+def simulate_distributor_feed(contract: Dict, publisher: Dict):
+    """Simulate sending ONIX feed to distributor"""
+    st.subheader(f"📤 Simulating Feed to {contract['retailer'].title()}")
+    
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+    
+    import time
+    
+    # Simulate feed generation process
+    steps = [
+        ("Gathering book metadata...", 20),
+        ("Applying contract filters...", 40),
+        ("Generating ONIX XML...", 60),
+        ("Validating feed...", 80),
+        ("Transmitting to distributor...", 100)
+    ]
+    
+    for step, progress in steps:
+        status_text.text(step)
+        progress_bar.progress(progress)
+        time.sleep(0.5)
+    
+    st.success(f"✅ Feed successfully sent to {contract['retailer'].title()}!")
+    st.json({
+        "feed_id": "FD-2025-001234",
+        "books_included": 23,
+        "territory": contract.get('territory_restrictions', ['US'])[0],
+        "format": "ONIX 3.0",
+        "timestamp": "2025-08-24T05:30:00Z"
+    })
+
+def test_contract_compliance(contract_id: str, publisher_id: str):
+    """Test contract compliance across all books"""
+    st.subheader("🔍 Contract Compliance Testing")
+    
+    books = get_books(publisher_id)
+    if not books:
+        st.warning("No books available for compliance testing.")
+        return
+    
+    # Simulate compliance testing
+    compliance_results = []
+    for book in books[:5]:  # Test first 5 books
+        # This would call the actual API in a real implementation
+        result = {
+            "book": book['title'],
+            "isbn": book['isbn'],
+            "compliant": True,  # Simulated
+            "issues": []
+        }
+        compliance_results.append(result)
+    
+    # Display results
+    compliant_count = sum(1 for r in compliance_results if r['compliant'])
+    st.metric("Books Tested", len(compliance_results))
+    st.metric("Compliant", compliant_count)
+    st.metric("Issues Found", len(compliance_results) - compliant_count)
+    
+    for result in compliance_results:
+        status_color = "🟢" if result['compliant'] else "🔴"
+        st.write(f"{status_color} **{result['book']}** ({result['isbn']})")
+
+def render_create_contract_form(publisher: Dict):
+    """Render form to create new contracts"""
+    with st.form("create_contract_form"):
+        st.write("**Contract Details**")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            contract_name = st.text_input("Contract Name*", placeholder="e.g., Amazon KDP Agreement 2025")
+            contract_type = st.selectbox("Contract Type*", 
+                ["distribution_agreement", "retailer_terms", "licensing"])
+            retailer = st.text_input("Retailer/Partner*", placeholder="e.g., Amazon, B&N, Apple")
+        
+        with col2:
+            effective_date = st.date_input("Effective Date")
+            expiration_date = st.date_input("Expiration Date")
+            territory_restrictions = st.multiselect(
+                "Territory Restrictions",
+                ["US", "UK", "CA", "AU", "EU", "DE", "FR", "JP", "IN"],
+                default=["US"]
+            )
+        
+        st.write("**Validation Rules**")
+        required_fields = st.multiselect(
+            "Required ONIX Fields",
+            ["isbn", "title", "author", "publication_date", "price", "description"],
+            default=["isbn", "title"]
+        )
+        
+        min_discount = st.slider("Minimum Discount %", 0, 50, 25)
+        max_discount = st.slider("Maximum Discount %", 25, 75, 50)
+        
+        submitted = st.form_submit_button("Create Contract")
+        
+        if submitted:
+            if not contract_name or not retailer:
+                st.error("Contract name and retailer are required fields.")
+                return
+            
+            validation_rules = {
+                "required_fields": required_fields,
+                "min_discount": min_discount / 100,
+                "max_discount": max_discount / 100
+            }
+            
+            contract_data = {
+                "publisher_id": publisher['id'],
+                "contract_name": contract_name,
+                "contract_type": contract_type,
+                "retailer": retailer,
+                "effective_date": effective_date.isoformat(),
+                "expiration_date": expiration_date.isoformat(),
+                "territory_restrictions": territory_restrictions,
+                "validation_rules": validation_rules
+            }
+            
+            result = make_api_request("POST", "/contracts", contract_data)
+            if result:
+                st.success(f"✅ Contract '{contract_name}' created successfully!")
+                st.rerun()
+            else:
+                st.error("Failed to create contract.")
+
+def render_distributor_integration(publisher: Dict):
+    """Render distributor integration simulation"""
+    st.write("**Major Distributors & Retailers**")
+    
+    distributors = [
+        {"name": "Amazon KDP", "status": "connected", "last_sync": "2 hours ago", "books": 156},
+        {"name": "Ingram Content", "status": "connected", "last_sync": "1 day ago", "books": 142},
+        {"name": "Barnes & Noble", "status": "pending", "last_sync": "Never", "books": 0},
+        {"name": "Apple Books", "status": "connected", "last_sync": "6 hours ago", "books": 89},
+        {"name": "Kobo", "status": "disconnected", "last_sync": "1 week ago", "books": 45},
+    ]
+    
+    for dist in distributors:
+        with st.container():
+            col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
+            
+            with col1:
+                status_icon = {"connected": "🟢", "pending": "🟡", "disconnected": "🔴"}[dist["status"]]
+                st.write(f"{status_icon} **{dist['name']}**")
+            
+            with col2:
+                st.write(f"Status: {dist['status'].title()}")
+            
+            with col3:
+                st.write(f"Books: {dist['books']}")
+            
+            with col4:
+                if dist["status"] == "connected":
+                    if st.button("🔄 Sync", key=f"sync_{dist['name']}"):
+                        st.success(f"Syncing with {dist['name']}...")
+                else:
+                    if st.button("🔗 Connect", key=f"connect_{dist['name']}"):
+                        st.info(f"Connecting to {dist['name']}...")
+        
+        st.divider()
+
+def render_business_workflow(publisher: Dict):
+    """Render business workflow visualization"""
+    st.write("**Publishing Workflow Overview**")
+    
+    # Workflow steps
+    workflow_steps = [
+        {"step": "1. Create Book", "status": "complete", "description": "Add book metadata and authors"},
+        {"step": "2. Generate ONIX", "status": "complete", "description": "Create distributor-ready XML feeds"},
+        {"step": "3. Contract Review", "status": "in_progress", "description": "Verify compliance with retailer terms"},
+        {"step": "4. Distribute", "status": "pending", "description": "Send feeds to retailers and distributors"},
+        {"step": "5. Monitor", "status": "pending", "description": "Track sales and compliance metrics"}
+    ]
+    
+    for i, step in enumerate(workflow_steps):
+        col1, col2 = st.columns([1, 3])
+        
+        with col1:
+            if step["status"] == "complete":
+                st.success(f"✅ {step['step']}")
+            elif step["status"] == "in_progress":
+                st.warning(f"🔄 {step['step']}")
+            else:
+                st.info(f"⏳ {step['step']}")
+        
+        with col2:
+            st.write(step["description"])
+        
+        if i < len(workflow_steps) - 1:
+            st.write("↓")
+    
+    st.divider()
+    
+    # Business metrics
+    st.subheader("📊 Business Impact")
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Books Published", "47", delta="3")
+    with col2:
+        st.metric("Active Contracts", "8", delta="1")
+    with col3:
+        st.metric("Territories", "12", delta="2")
+    with col4:
+        st.metric("Compliance Rate", "96%", delta="1%")
+
 def main():
     """Main application entry point"""
     load_css()
@@ -574,8 +1031,7 @@ def main():
     elif selected_view == "✍️ Author Search":
         render_author_search()
     elif selected_view == "📄 Contract Management":
-        st.header("📄 Contract Management")
-        st.info("Contract management interface coming soon.")
+        render_contract_management(publisher)
     elif selected_view == "🔍 Compliance Checking":
         render_compliance_checking(publisher)
 

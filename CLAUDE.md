@@ -36,6 +36,37 @@ NEVER use these terms in code or documentation:
 
 Use realistic language: "operational", "functional", "working", "complete".
 
+### Process Hygiene (INVARIANT)
+CRITICAL: Maintain strict process and resource hygiene.
+
+**Database Integrity:**
+- NEVER create duplicate records that violate unique constraints
+- Always use proper error handling for IntegrityError exceptions
+- Clear test databases completely between runs: `rm -f /tmp/metaops_demo.db`
+- Verify unique constraints are properly set in models: `unique=True`
+
+**Process Management:**
+- NEVER start processes without tracking them
+- Before starting new services, check existing processes: `ps aux | grep -E "(streamlit|uvicorn)"`
+- Use KillBash tool to properly terminate background processes
+- NEVER abandon background processes - clean up after every session
+- Use single ports per service type:
+  - API: 8002 (uvicorn)  
+  - Demo UI: 8003 (streamlit)
+  - One service per port, kill before restarting
+
+**Resource Cleanup:**
+- Always clean up temporary files and databases
+- Kill background processes at session end
+- Remove duplicate ISBNs, authors, or other unique entities
+- Clear caches and temporary storage between tests
+
+**Before Starting Any Service:**
+1. Check if port is in use: `lsof -ti:PORT` or `ps aux | grep PORT`
+2. Kill existing process if needed: `pkill -f "service_name"`
+3. Start new process with explicit environment variables
+4. Track the process ID or use KillBash tool for cleanup
+
 ### Web Services (CURRENT)
 ONIX validation interfaces:
 - Main Validator: http://100.111.114.84:8507 (streamlit_app.py) - Single file validation with tooltips
